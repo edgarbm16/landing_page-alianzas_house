@@ -1,0 +1,105 @@
+---
+import '../styles/global.css';
+import '@fontsource-variable/inter/index.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+	ogImage?: string;
+}
+
+const { title = '', description = '', ogImage = '' } = Astro.props;
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
+
+const canonical = new URL(Astro.url.pathname, Astro.url.origin).href;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link id="favicon-link" rel="icon" href="data:," />
+		<link rel="canonical" href={canonical} />
+		<meta name="description" content={description} />
+		<title>{title}</title>
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		{ogImage && <meta property="og:image" content={ogImage} />}
+	</head>
+	<body data-supabase-url={supabaseUrl} data-supabase-key={supabaseKey}>
+		<slot />
+	</body>
+</html>
+
+<script>
+	import { createClient } from '@supabase/supabase-js';
+
+	const supabaseUrl = document.body.dataset.supabaseUrl;
+	const supabaseKey = document.body.dataset.supabaseKey;
+
+	if (supabaseUrl && supabaseKey) {
+		const supabase = createClient(supabaseUrl, supabaseKey);
+
+		async function loadSettings() {
+			try {
+				const { data } = await supabase
+					.from('settings')
+					.select('*')
+					.limit(1)
+					.maybeSingle();
+
+				if (data) {
+					if (data.favicon_url) {
+						const faviconLink = document.getElementById('favicon-link') as HTMLLinkElement;
+						if (faviconLink) {
+							faviconLink.href = data.favicon_url;
+							const ext = data.favicon_url.split('.').pop()?.split('?')[0]?.toLowerCase();
+							const mimeTypes: Record<string, string> = {
+								png: 'image/png',
+								jpg: 'image/jpeg',
+								jpeg: 'image/jpeg',
+								ico: 'image/x-icon',
+								svg: 'image/svg+xml',
+								webp: 'image/webp',
+							};
+							if (ext && mimeTypes[ext]) faviconLink.type = mimeTypes[ext];
+						}
+					}
+
+					if (data.google_tag_manager_id) {
+						const gtmId = data.google_tag_manager_id;
+
+						const gtmScript = document.createElement('script');
+						gtmScript.innerHTML = `
+							(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+							new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+							j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+							'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+							})(window,document,'script','dataLayer','${gtmId}');
+						`;
+						document.head.appendChild(gtmScript);
+
+						const gtmNoscript = document.createElement('noscript');
+						gtmNoscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
+						document.body.insertBefore(gtmNoscript, document.body.firstChild);
+					}
+
+					if (data.company_name) {
+						document.title = document.title
+							? `${document.title} - ${data.company_name}`
+							: data.company_name;
+						window.dispatchEvent(new CustomEvent('settings-loaded', { detail: data }));
+					}
+				}
+			} catch (error) {
+				console.error('Error loading settings:', error);
+			}
+		}
+
+		loadSettings();
+	}
+</script>

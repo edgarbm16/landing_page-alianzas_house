@@ -1,0 +1,233 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import FormField from '../../components/dashboard/FormField.astro';
+import SectionCard from '../../components/dashboard/SectionCard.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<DashboardLayout title="Correos" activeNav="emails" pageTitle="Gestión de Correos">
+  <div id="page-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <!-- Add recipient form -->
+  <SectionCard title="Agregar Nuevo Destinatario" class="space-y-4">
+    <form id="add-email-form">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <FormField label="Correo Electrónico" class="sm:col-span-1">
+          <input
+            type="email"
+            id="email-input"
+            required
+            placeholder="ejemplo@correo.com"
+            class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </FormField>
+        <FormField label="Tipo de Destinatario">
+          <select id="recipient-type" class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="to">Destinatario Principal (TO)</option>
+            <option value="cc">Copia (CC)</option>
+            <option value="bcc">Copia Oculta (BCC)</option>
+          </select>
+        </FormField>
+        <div>
+          <button type="submit" id="add-btn" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+            <span id="add-btn-text">Agregar</span>
+            <span id="add-btn-loader" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+          </button>
+        </div>
+      </div>
+    </form>
+    <div id="success-message" class="hidden px-4 py-3 rounded-lg bg-green-900/40 border border-green-700 text-green-400 text-sm"></div>
+    <div id="error-message" class="hidden px-4 py-3 rounded-lg bg-red-900/40 border border-red-700 text-red-400 text-sm"></div>
+  </SectionCard>
+
+  <!-- Recipients list -->
+  <div class="bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div class="p-5 border-b border-gray-700">
+      <p class="text-white font-semibold text-base">Destinatarios Configurados</p>
+    </div>
+    <div class="divide-y divide-gray-700">
+
+      <div class="p-5 space-y-3">
+        <div>
+          <p class="text-sm font-medium text-gray-300 mb-0.5">Destinatarios Principales (TO)</p>
+          <p class="text-xs text-gray-500 mb-3">Aparecerán como destinatarios principales</p>
+          <div id="to-recipients" class="space-y-2">
+            <div class="text-sm text-gray-500">No hay destinatarios configurados</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-3">
+        <div>
+          <p class="text-sm font-medium text-gray-300 mb-0.5">Copia (CC)</p>
+          <p class="text-xs text-gray-500 mb-3">Recibirán una copia visible</p>
+          <div id="cc-recipients" class="space-y-2">
+            <div class="text-sm text-gray-500">No hay destinatarios configurados</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 space-y-3">
+        <div>
+          <p class="text-sm font-medium text-gray-300 mb-0.5">Copia Oculta (BCC)</p>
+          <p class="text-xs text-gray-500 mb-3">Recibirán una copia oculta</p>
+          <div id="bcc-recipients" class="space-y-2">
+            <div class="text-sm text-gray-500">No hay destinatarios configurados</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  function esc(s: any): string {
+    return (s ?? '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const pageData    = document.getElementById('page-data') as HTMLElement;
+  const supabaseUrl = pageData?.dataset.supabaseUrl;
+  const supabaseKey = pageData?.dataset.supabaseKey;
+
+  const addEmailForm      = document.getElementById('add-email-form') as HTMLFormElement;
+  const addBtn            = document.getElementById('add-btn') as HTMLButtonElement;
+  const addBtnText        = document.getElementById('add-btn-text') as HTMLElement;
+  const addBtnLoader      = document.getElementById('add-btn-loader') as HTMLElement;
+  const emailInput        = document.getElementById('email-input') as HTMLInputElement;
+  const recipientType     = document.getElementById('recipient-type') as HTMLSelectElement;
+  const successMessage    = document.getElementById('success-message') as HTMLElement;
+  const errorMessage      = document.getElementById('error-message') as HTMLElement;
+  const toRecipientsList  = document.getElementById('to-recipients') as HTMLElement;
+  const ccRecipientsList  = document.getElementById('cc-recipients') as HTMLElement;
+  const bccRecipientsList = document.getElementById('bcc-recipients') as HTMLElement;
+
+  let userRole = '';
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('dashboard-ready', async (e: Event) => {
+      const { session, profile } = (e as CustomEvent).detail;
+
+      const { data: hasPermission } = await supabase.rpc('has_module_permission', {
+        user_id: session.user.id, module: 'emails'
+      });
+      if (!hasPermission) { (window as any).dashAlert('Sin permiso para acceder a este módulo', 'error'); window.location.href = '/dashboard'; return; }
+
+      userRole = profile?.role ?? '';
+      if (userRole === 'Analista') {
+        if (addBtn) addBtn.style.display = 'none';
+        if (emailInput) emailInput.disabled = true;
+        if (recipientType) recipientType.disabled = true;
+      }
+
+      await loadRecipients();
+    });
+
+    async function loadRecipients() {
+      const { data, error } = await supabase
+        .from('email_recipients')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) { console.error(error); return; }
+
+      const toList  = data?.filter(r => r.recipient_type === 'to')  || [];
+      const ccList  = data?.filter(r => r.recipient_type === 'cc')  || [];
+      const bccList = data?.filter(r => r.recipient_type === 'bcc') || [];
+
+      renderRecipients(toList,  toRecipientsList);
+      renderRecipients(ccList,  ccRecipientsList);
+      renderRecipients(bccList, bccRecipientsList);
+    }
+
+    function renderRecipients(recipients: any[], container: HTMLElement) {
+      if (!recipients.length) {
+        container.innerHTML = '<p class="text-sm text-gray-500">No hay destinatarios configurados</p>';
+        return;
+      }
+      const isAnalyst = userRole === 'Analista';
+      container.innerHTML = recipients.map(r => `
+        <div class="flex items-center justify-between px-4 py-2.5 rounded-lg bg-gray-700/50 border border-gray-700">
+          <span class="text-sm text-gray-200">${esc(r.email)}</span>
+          ${!isAnalyst ? `
+          <button class="delete-btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-900/30 text-red-400 hover:bg-red-900/60 text-xs font-medium transition-colors border border-red-800/50" data-recipient-id="${esc(r.id)}">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Eliminar
+          </button>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('click', e => {
+      const btn = (e.target as HTMLElement).closest('.delete-btn[data-recipient-id]') as HTMLElement | null;
+      if (btn) {
+        const id = btn.dataset.recipientId;
+        if (id) (window as any).deleteRecipient(id);
+      }
+    });
+
+    (window as any).deleteRecipient = async function(id: string) {
+      if (!await (window as any).dashConfirm('¿Eliminar este destinatario?')) return;
+      const { error } = await supabase.from('email_recipients').delete().eq('id', id);
+      if (error) {
+        showMessage(errorMessage, 'Error al eliminar el destinatario');
+        return;
+      }
+      await loadRecipients();
+      showMessage(successMessage, 'Destinatario eliminado exitosamente');
+    };
+
+    function showMessage(el: HTMLElement, text: string) {
+      el.textContent = text;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    addEmailForm?.addEventListener('submit', async e => {
+      e.preventDefault();
+      successMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+      addBtn.disabled = true;
+      addBtnText.classList.add('hidden');
+      addBtnLoader.classList.remove('hidden');
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { error } = await supabase.from('email_recipients').insert({
+          email: emailInput.value,
+          recipient_type: recipientType.value,
+          is_active: true,
+          created_by: session?.user.id,
+        });
+        if (error) throw error;
+
+        emailInput.value = '';
+        recipientType.value = 'to';
+        await loadRecipients();
+        showMessage(successMessage, 'Destinatario agregado exitosamente');
+      } catch (err) {
+        console.error(err);
+        showMessage(errorMessage, 'Error al agregar. Verifica que el correo no esté duplicado.');
+      } finally {
+        addBtn.disabled = false;
+        addBtnText.classList.remove('hidden');
+        addBtnLoader.classList.add('hidden');
+      }
+    });
+  }
+</script>

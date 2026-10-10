@@ -1,0 +1,38 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="bg-gray-900">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col items-center gap-4">
+		<div class="flex items-center gap-2">
+			<img id="footer-logo-img" src="" alt="" class="h-16 md:h-24 object-contain hidden" />
+			<span id="footer-logo-text" class="text-white font-bold text-lg"></span>
+		</div>
+		<p class="text-xs text-gray-500">© {year} <span id="footer-company-name"></span>. Todos los derechos reservados.</p>
+		<a href="/aviso-privacidad" class="text-xs text-gray-600 hover:text-gray-400 transition-colors">Aviso de Privacidad</a>
+	</div>
+</footer>
+
+<script>
+	window.addEventListener('settings-loaded', (e: Event) => {
+		const detail      = (e as CustomEvent).detail ?? {};
+		const logoUrl     = detail.logo_url    as string | undefined;
+		const companyName = detail.company_name as string | undefined;
+
+		const logoImg       = document.getElementById('footer-logo-img')     as HTMLImageElement;
+		const logoText      = document.getElementById('footer-logo-text')    as HTMLElement;
+		const companyNameEl = document.getElementById('footer-company-name') as HTMLElement;
+
+		if (logoUrl) {
+			logoImg.src = logoUrl;
+			logoImg.alt = companyName || '';
+			logoImg.classList.remove('hidden');
+		} else if (companyName) {
+			logoText.textContent = companyName;
+		}
+
+		if (companyName) {
+			companyNameEl.textContent = companyName;
+		}
+	});
+</script>

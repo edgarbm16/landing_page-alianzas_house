@@ -1,0 +1,293 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import FormField from '../../components/dashboard/FormField.astro';
+import SectionCard from '../../components/dashboard/SectionCard.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<DashboardLayout title="Configuración" activeNav="settings" pageTitle="Configuración del Sitio">
+  <div id="page-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <form id="settings-form" class="space-y-6">
+
+    <!-- General info -->
+    <SectionCard title="Información General" class="space-y-4">
+      <FormField label="Nombre de la Empresa" class="max-w-md">
+        <input
+          type="text"
+          id="company-name"
+          placeholder="Ej: Mi Empresa"
+          class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </FormField>
+    </SectionCard>
+
+    <!-- Images -->
+    <SectionCard title="Imágenes" class="space-y-6">
+
+      <!-- Logo -->
+      <div class="space-y-3">
+        <div>
+          <p class="text-sm text-gray-300">Logo de la Empresa</p>
+          <p class="text-xs text-gray-500 mt-0.5">Se mostrará en el sidebar del panel</p>
+        </div>
+        <div id="logo-preview" class="hidden items-center gap-4 p-3 rounded-lg bg-gray-700/50 border border-gray-700">
+          <img id="logo-preview-img" src="" alt="Logo" class="max-h-16 max-w-45 object-contain rounded" />
+          <button type="button" id="remove-logo" class="text-xs px-3 py-1.5 rounded-lg bg-red-900/30 text-red-400 hover:bg-red-900/60 border border-red-800/50 transition-colors">
+            Eliminar
+          </button>
+        </div>
+        <input type="file" id="logo" accept="image/*" class="hidden" />
+        <button type="button" id="upload-logo-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-600 text-gray-400 hover:border-blue-500 hover:text-blue-400 text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Subir Logo
+        </button>
+      </div>
+
+      <!-- Favicon -->
+      <div class="space-y-3 pt-4 border-t border-gray-700">
+        <div>
+          <p class="text-sm text-gray-300">Favicon</p>
+          <p class="text-xs text-gray-500 mt-0.5">Se mostrará en la pestaña del navegador</p>
+        </div>
+        <div id="favicon-preview" class="hidden items-center gap-4 p-3 rounded-lg bg-gray-700/50 border border-gray-700">
+          <img id="favicon-preview-img" src="" alt="Favicon" class="max-h-10 max-w-15 object-contain rounded" />
+          <button type="button" id="remove-favicon" class="text-xs px-3 py-1.5 rounded-lg bg-red-900/30 text-red-400 hover:bg-red-900/60 border border-red-800/50 transition-colors">
+            Eliminar
+          </button>
+        </div>
+        <input type="file" id="favicon" accept="image/*" class="hidden" />
+        <button type="button" id="upload-favicon-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-gray-600 text-gray-400 hover:border-blue-500 hover:text-blue-400 text-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Subir Favicon
+        </button>
+      </div>
+    </SectionCard>
+
+    <!-- GTM -->
+    <SectionCard title="Google Tag Manager" class="space-y-4">
+      <FormField label="ID de Google Tag Manager" hint="Formato: GTM-XXXXXXX" class="max-w-md">
+        <input
+          type="text"
+          id="gtm-id"
+          placeholder="GTM-XXXXXXX"
+          class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </FormField>
+    </SectionCard>
+
+    <!-- Actions & messages -->
+    <div class="space-y-3">
+      <div class="flex justify-end">
+        <button type="submit" id="save-btn" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+          <span id="save-btn-text">Guardar Cambios</span>
+          <span id="save-btn-loader" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+        </button>
+      </div>
+      <div id="success-message" class="hidden px-4 py-3 rounded-lg bg-green-900/40 border border-green-700 text-green-400 text-sm">
+        Configuraciones guardadas exitosamente
+      </div>
+      <div id="error-message" class="hidden px-4 py-3 rounded-lg bg-red-900/40 border border-red-700 text-red-400 text-sm"></div>
+    </div>
+
+  </form>
+</DashboardLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const pageData    = document.getElementById('page-data') as HTMLElement;
+  const supabaseUrl = pageData?.dataset.supabaseUrl;
+  const supabaseKey = pageData?.dataset.supabaseKey;
+
+  const settingsForm      = document.getElementById('settings-form') as HTMLFormElement;
+  const saveBtn           = document.getElementById('save-btn') as HTMLButtonElement;
+  const saveBtnText       = document.getElementById('save-btn-text') as HTMLElement;
+  const saveBtnLoader     = document.getElementById('save-btn-loader') as HTMLElement;
+  const successMessage    = document.getElementById('success-message') as HTMLElement;
+  const errorMessage      = document.getElementById('error-message') as HTMLElement;
+  const companyNameInput  = document.getElementById('company-name') as HTMLInputElement;
+  const gtmIdInput        = document.getElementById('gtm-id') as HTMLInputElement;
+  const logoInput         = document.getElementById('logo') as HTMLInputElement;
+  const uploadLogoBtn     = document.getElementById('upload-logo-btn') as HTMLButtonElement;
+  const logoPreview       = document.getElementById('logo-preview') as HTMLElement;
+  const logoPreviewImg    = document.getElementById('logo-preview-img') as HTMLImageElement;
+  const removeLogoBtn     = document.getElementById('remove-logo') as HTMLButtonElement;
+  const faviconInput      = document.getElementById('favicon') as HTMLInputElement;
+  const uploadFaviconBtn  = document.getElementById('upload-favicon-btn') as HTMLButtonElement;
+  const faviconPreview    = document.getElementById('favicon-preview') as HTMLElement;
+  const faviconPreviewImg = document.getElementById('favicon-preview-img') as HTMLImageElement;
+  const removeFaviconBtn  = document.getElementById('remove-favicon') as HTMLButtonElement;
+
+  let currentSettings: any = null;
+  let uploadedLogoUrl: string | null = null;
+  let uploadedFaviconUrl: string | null = null;
+  let logoChanged = false;
+  let faviconChanged = false;
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('dashboard-ready', async (e: Event) => {
+      const { session, profile } = (e as CustomEvent).detail;
+
+      const { data: hasPermission } = await supabase.rpc('has_module_permission', {
+        user_id: session.user.id, module: 'settings'
+      });
+      if (!hasPermission) { alert('Sin permiso'); window.location.href = '/dashboard'; return; }
+
+      const isAnalyst = profile?.role === 'Analista';
+      if (isAnalyst) {
+        companyNameInput.disabled = true;
+        gtmIdInput.disabled = true;
+        uploadLogoBtn.style.display = 'none';
+        uploadFaviconBtn.style.display = 'none';
+        removeLogoBtn.style.display = 'none';
+        removeFaviconBtn.style.display = 'none';
+        saveBtn.style.display = 'none';
+      }
+
+      await loadSettings();
+    });
+
+    async function loadSettings() {
+      const { data, error } = await supabase.from('settings').select('*').limit(1).maybeSingle();
+      if (error) { console.error(error); return; }
+      if (!data) return;
+
+      currentSettings = data;
+      companyNameInput.value = data.company_name || '';
+      gtmIdInput.value = data.google_tag_manager_id || '';
+
+      if (data.logo_url) {
+        uploadedLogoUrl = data.logo_url;
+        logoPreviewImg.src = data.logo_url;
+        logoPreview.classList.remove('hidden');
+        logoPreview.classList.add('flex');
+        uploadLogoBtn.style.display = 'none';
+      } else {
+        uploadedLogoUrl = null;
+        logoPreview.classList.add('hidden');
+        logoPreview.classList.remove('flex');
+        uploadLogoBtn.style.display = '';
+      }
+
+      if (data.favicon_url) {
+        uploadedFaviconUrl = data.favicon_url;
+        faviconPreviewImg.src = data.favicon_url;
+        faviconPreview.classList.remove('hidden');
+        faviconPreview.classList.add('flex');
+        uploadFaviconBtn.style.display = 'none';
+      } else {
+        uploadedFaviconUrl = null;
+        faviconPreview.classList.add('hidden');
+        faviconPreview.classList.remove('flex');
+        uploadFaviconBtn.style.display = '';
+      }
+
+      logoChanged = false;
+      faviconChanged = false;
+    }
+
+    function toBase64(file: File): Promise<string> {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+      });
+    }
+
+    uploadLogoBtn?.addEventListener('click', () => logoInput.click());
+    logoInput?.addEventListener('change', async e => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const base64 = await toBase64(file);
+      uploadedLogoUrl = base64;
+      logoChanged = true;
+      logoPreviewImg.src = base64;
+      logoPreview.classList.remove('hidden');
+      logoPreview.classList.add('flex');
+      uploadLogoBtn.style.display = 'none';
+    });
+    removeLogoBtn?.addEventListener('click', () => {
+      uploadedLogoUrl = null;
+      logoChanged = true;
+      logoPreviewImg.src = '';
+      logoPreview.classList.add('hidden');
+      logoPreview.classList.remove('flex');
+      uploadLogoBtn.style.display = '';
+      logoInput.value = '';
+    });
+
+    uploadFaviconBtn?.addEventListener('click', () => faviconInput.click());
+    faviconInput?.addEventListener('change', async e => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const base64 = await toBase64(file);
+      uploadedFaviconUrl = base64;
+      faviconChanged = true;
+      faviconPreviewImg.src = base64;
+      faviconPreview.classList.remove('hidden');
+      faviconPreview.classList.add('flex');
+      uploadFaviconBtn.style.display = 'none';
+    });
+    removeFaviconBtn?.addEventListener('click', () => {
+      uploadedFaviconUrl = null;
+      faviconChanged = true;
+      faviconPreviewImg.src = '';
+      faviconPreview.classList.add('hidden');
+      faviconPreview.classList.remove('flex');
+      uploadFaviconBtn.style.display = '';
+      faviconInput.value = '';
+    });
+
+    settingsForm?.addEventListener('submit', async e => {
+      e.preventDefault();
+      successMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+      saveBtn.disabled = true;
+      saveBtnText.classList.add('hidden');
+      saveBtnLoader.classList.remove('hidden');
+
+      try {
+        const updateData: any = {
+          company_name: companyNameInput.value,
+          google_tag_manager_id: gtmIdInput.value || null,
+          updated_at: new Date().toISOString(),
+        };
+        if (logoChanged) updateData.logo_url = uploadedLogoUrl;
+        if (faviconChanged) updateData.favicon_url = uploadedFaviconUrl;
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) updateData.updated_by = session.user.id;
+
+        const { error } = await supabase.from('settings').update(updateData).eq('id', currentSettings.id);
+        if (error) throw error;
+
+        Object.assign(currentSettings, updateData);
+        logoChanged = false;
+        faviconChanged = false;
+
+        successMessage.classList.remove('hidden');
+        setTimeout(() => successMessage.classList.add('hidden'), 3000);
+      } catch (err) {
+        console.error(err);
+        errorMessage.textContent = 'Error al guardar. Intenta de nuevo.';
+        errorMessage.classList.remove('hidden');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtnText.classList.remove('hidden');
+        saveBtnLoader.classList.add('hidden');
+      }
+    });
+  }
+</script>

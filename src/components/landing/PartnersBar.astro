@@ -1,0 +1,16 @@
+---
+const partners = ['AMPI', 'INFONAVIT', 'FOVISSSTE', 'BBVA', 'Banorte', 'Santander', 'HSBC', 'Banbajío'];
+---
+
+<section class="bg-white py-14 border-y border-gray-100">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<p class="text-center text-xs font-bold uppercase tracking-widest text-gray-400 mb-8">
+			Trabajamos con las principales instituciones financieras
+		</p>
+		<div class="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+			{partners.map(p => (
+				<span class="text-gray-300 font-bold text-sm md:text-base tracking-wide uppercase hover:text-gray-400 transition-colors">{p}</span>
+			))}
+		</div>
+	</div>
+</section>

@@ -1,0 +1,159 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LandingNav from '../components/landing/LandingNav.astro';
+import LandingFooter from '../components/landing/LandingFooter.astro';
+---
+
+<Layout title="Aviso de Privacidad">
+	<LandingNav />
+
+	<main class="pt-16 bg-white">
+		<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+
+			<div class="mb-10">
+				<span class="inline-block text-blue-600 text-xs font-bold uppercase tracking-widest mb-4">Legal</span>
+				<h1 class="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">Aviso de Privacidad</h1>
+				<p class="text-sm text-gray-400">Última actualización: {new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+			</div>
+
+			<div class="prose-content space-y-10 text-gray-600 leading-relaxed">
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">1. Identidad y domicilio del responsable</h2>
+					<p>
+						En cumplimiento con lo dispuesto por la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento, le informamos que <span id="company-name-text" class="font-medium text-gray-800">la empresa</span>, con domicilio en México, es responsable del tratamiento de sus datos personales.
+					</p>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">2. Datos personales que recabamos</h2>
+					<p class="mb-3">Para llevar a cabo las finalidades descritas en el presente aviso de privacidad, recabamos los siguientes datos personales:</p>
+					<ul class="space-y-2 ml-4">
+						{[
+							'Nombre completo',
+							'Correo electrónico',
+							'Número de teléfono',
+							'Interés en bienes raíces (compra, venta, renta o inversión)',
+							'Presupuesto aproximado',
+							'Mensaje o comentarios adicionales',
+						].map(item => (
+							<li class="flex items-start gap-2.5 text-sm">
+								<svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+									<path d="M5 12h14M12 5l7 7-7 7"/>
+								</svg>
+								{item}
+							</li>
+						))}
+					</ul>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">3. Finalidades del tratamiento</h2>
+					<p class="mb-3">Sus datos personales serán utilizados para las siguientes <strong class="text-gray-800">finalidades primarias</strong>, necesarias para la relación jurídica entre usted y nosotros:</p>
+					<ul class="space-y-2 ml-4 mb-4">
+						{[
+							'Atender su solicitud de información sobre propiedades inmobiliarias',
+							'Contactarle para brindarle asesoría personalizada',
+							'Enviarle información sobre propiedades que se ajusten a sus necesidades',
+							'Agendar visitas y citas con nuestros asesores',
+						].map(item => (
+							<li class="flex items-start gap-2.5 text-sm">
+								<svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+									<path d="M5 12h14M12 5l7 7-7 7"/>
+								</svg>
+								{item}
+							</li>
+						))}
+					</ul>
+					<p class="mb-3">De manera <strong class="text-gray-800">secundaria</strong>, sus datos podrán utilizarse para:</p>
+					<ul class="space-y-2 ml-4">
+						{[
+							'Envío de información sobre nuevas propiedades, promociones y servicios',
+							'Realización de encuestas de satisfacción',
+							'Fines estadísticos y de mejora de nuestros servicios',
+						].map(item => (
+							<li class="flex items-start gap-2.5 text-sm">
+								<svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+									<path d="M5 12h14M12 5l7 7-7 7"/>
+								</svg>
+								{item}
+							</li>
+						))}
+					</ul>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">4. Derechos ARCO</h2>
+					<p class="mb-3">
+						Usted tiene derecho a <strong class="text-gray-800">Acceder, Rectificar, Cancelar u Oponerse</strong> al tratamiento de sus datos personales (derechos ARCO). Para ejercer dichos derechos, envíe su solicitud a nuestro correo electrónico indicando:
+					</p>
+					<ul class="space-y-2 ml-4">
+						{[
+							'Nombre completo y datos de contacto',
+							'Descripción clara del derecho que desea ejercer',
+							'Documentos que acrediten su identidad',
+						].map(item => (
+							<li class="flex items-start gap-2.5 text-sm">
+								<svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+									<path d="M5 12h14M12 5l7 7-7 7"/>
+								</svg>
+								{item}
+							</li>
+						))}
+					</ul>
+					<p class="mt-3 text-sm">Responderemos a su solicitud en un plazo máximo de <strong class="text-gray-800">20 días hábiles</strong>.</p>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">5. Transferencia de datos</h2>
+					<p>
+						Sus datos personales no serán transferidos a terceros sin su consentimiento, salvo en los casos previstos por el artículo 37 de la LFPDPPP o cuando sea necesario para la prestación del servicio solicitado (por ejemplo, instituciones financieras vinculadas a trámites de crédito hipotecario).
+					</p>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">6. Uso de cookies</h2>
+					<p>
+						Nuestro sitio web puede hacer uso de cookies y tecnologías similares para mejorar su experiencia de navegación, analizar el tráfico y personalizar el contenido. Puede configurar su navegador para rechazar cookies, aunque esto podría limitar algunas funcionalidades del sitio.
+					</p>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">7. Cambios al aviso de privacidad</h2>
+					<p>
+						Nos reservamos el derecho de modificar el presente aviso de privacidad en cualquier momento. Cualquier cambio será notificado a través de nuestro sitio web. Le recomendamos revisarlo periódicamente.
+					</p>
+				</section>
+
+				<section>
+					<h2 class="text-xl font-bold text-gray-900 mb-3">8. Consentimiento</h2>
+					<p>
+						Al proporcionar sus datos personales a través de nuestros formularios de contacto, usted manifiesta su consentimiento expreso para el tratamiento de sus datos conforme a los términos del presente aviso de privacidad.
+					</p>
+				</section>
+
+			</div>
+
+			<div class="mt-12 pt-8 border-t border-gray-100">
+				<a href="/" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors">
+					<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+						<path d="M19 12H5M12 5l-7 7 7 7"/>
+					</svg>
+					Volver al inicio
+				</a>
+			</div>
+
+		</div>
+	</main>
+
+	<LandingFooter />
+</Layout>
+
+<script>
+	window.addEventListener('settings-loaded', (e: Event) => {
+		const detail = (e as CustomEvent).detail ?? {};
+		const companyName = detail.company_name as string | undefined;
+		const el = document.getElementById('company-name-text');
+		if (companyName && el) el.textContent = companyName;
+	});
+</script>

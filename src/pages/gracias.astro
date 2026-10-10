@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="¡Gracias por contactarnos!">
+	<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
+		<div class="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+
+			<!-- Checkmark icon -->
+			<div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+				<svg class="w-8 h-8 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+					<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+				</svg>
+			</div>
+
+			<h1 class="text-3xl font-bold text-gray-900 mb-3">¡Mensaje enviado!</h1>
+			<p class="text-gray-500 leading-relaxed mb-8">
+				Hemos recibido tu información. Uno de nuestros asesores se pondrá en contacto contigo en las próximas 24 horas.
+			</p>
+
+			<!-- Next steps -->
+			<div class="bg-blue-50 rounded-xl p-5 mb-8 text-left">
+				<p class="text-sm font-semibold text-blue-900 mb-3">¿Qué sigue?</p>
+				<ul class="space-y-2">
+					{[
+						'Revisaremos tu solicitud cuidadosamente',
+						'Un asesor especializado te contactará',
+						'Te enviaremos propiedades que se ajusten a tus necesidades',
+						'Programaremos visitas a las propiedades de tu interés',
+					].map(step => (
+						<li class="flex items-start gap-2.5 text-sm text-blue-800">
+							<svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+								<path d="M5 12h14M12 5l7 7-7 7"/>
+							</svg>
+							{step}
+						</li>
+					))}
+				</ul>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex flex-col sm:flex-row gap-3 justify-center">
+				<a href="/" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">
+					Volver al inicio
+				</a>
+				<a href="/#propiedades" class="inline-flex items-center justify-center px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold text-sm transition-colors">
+					Ver propiedades
+				</a>
+			</div>
+
+		</div>
+	</div>
+</Layout>

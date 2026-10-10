@@ -1,0 +1,503 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import FormField from '../../components/dashboard/FormField.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<DashboardLayout title="Landings" activeNav="landings" pageTitle="Gestión de Landings">
+  <div id="page-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <!-- Actions bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+    <!-- Search -->
+    <div class="relative flex-1 max-w-sm">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Buscar por nombre o slug..."
+        class="w-full rounded-lg bg-gray-800 border border-gray-700 text-white text-sm pl-9 pr-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+    <!-- Filters -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <button class="filter-btn active-filter text-xs px-3 py-1.5 rounded-full font-medium transition-colors bg-blue-600 text-white" data-filter="all">Todos</button>
+      <button class="filter-btn text-xs px-3 py-1.5 rounded-full font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="published">Publicadas</button>
+      <button class="filter-btn text-xs px-3 py-1.5 rounded-full font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="draft">Borrador</button>
+      <button class="filter-btn text-xs px-3 py-1.5 rounded-full font-medium transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" data-filter="home">Principal</button>
+    </div>
+    <!-- New landing button -->
+    <button id="create-landing-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shrink-0 sm:ml-auto">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+      </svg>
+      Nueva Landing
+    </button>
+  </div>
+
+  <!-- Landings list -->
+  <div class="bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div id="landings-list" class="divide-y divide-gray-700">
+      <div class="px-5 py-10 text-center text-gray-500">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="landing-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700 sticky top-0 bg-gray-800 rounded-t-xl z-10">
+        <p id="modal-title" class="text-white font-semibold text-lg">Nueva Landing</p>
+        <button id="close-modal" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+        <!-- Basic info -->
+        <div class="space-y-4">
+          <p class="text-xs font-medium text-gray-400 uppercase">Información Básica</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Nombre de la Landing">
+              <input type="text" id="landing-name" placeholder="Ej: Casas en Venta"
+                class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </FormField>
+            <FormField label="Slug (URL)">
+              <input type="text" id="landing-slug" placeholder="casas-venta"
+                class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p class="text-xs text-gray-500">URL: dominio.com/<span id="slug-preview">casas-venta</span></p>
+            </FormField>
+          </div>
+        </div>
+
+        <!-- Hero section -->
+        <div class="space-y-4 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">Hero Section</p>
+          <FormField label="H1 (Título Principal)">
+            <input type="text" id="landing-h1"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </FormField>
+          <FormField label="H2 (Subtítulo)">
+            <input type="text" id="landing-h2"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </FormField>
+          <FormField label="Descripción">
+            <textarea id="landing-description" rows="3"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+          </FormField>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Tipo de Hero">
+              <select id="hero-type"
+                class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="image">Imagen</option>
+                <option value="video">Video</option>
+              </select>
+            </FormField>
+            <FormField label="Archivo Hero">
+              <input type="file" id="hero-file" accept="image/*,video/*"
+                class="text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-gray-600 file:text-gray-200 hover:file:bg-gray-500" />
+              <p id="current-hero-file" class="text-xs text-gray-500"></p>
+            </FormField>
+          </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="space-y-4 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">SEO Meta Tags</p>
+          <FormField label="Meta Title">
+            <input type="text" id="meta-title"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </FormField>
+          <FormField label="Meta Description">
+            <textarea id="meta-description" rows="2"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+          </FormField>
+        </div>
+
+        <!-- Contact -->
+        <div class="space-y-4 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">Información de Contacto</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Teléfono">
+              <input type="text" id="phone"
+                class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </FormField>
+            <FormField label="WhatsApp">
+              <input type="text" id="whatsapp"
+                class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </FormField>
+          </div>
+          <FormField label="Mensaje de WhatsApp">
+            <textarea id="whatsapp-message" rows="2"
+              class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+          </FormField>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="whatsapp-button-enabled" class="w-4 h-4 rounded accent-blue-500" />
+            <span class="text-sm text-gray-300">Habilitar botón flotante de WhatsApp</span>
+          </label>
+        </div>
+
+        <!-- Publish -->
+        <div class="pt-4 border-t border-gray-700">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="published" class="w-4 h-4 rounded accent-blue-500" />
+            <span class="text-sm text-gray-300">Publicar landing (visible al público)</span>
+          </label>
+        </div>
+
+      </div>
+
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-700 sticky bottom-0 bg-gray-800 rounded-b-xl">
+        <button id="cancel-btn" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium transition-colors">Cancelar</button>
+        <button id="save-landing-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">Guardar Landing</button>
+      </div>
+
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  function esc(s: any): string {
+    return (s ?? '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const pageData    = document.getElementById('page-data') as HTMLElement;
+  const supabaseUrl = pageData?.dataset.supabaseUrl;
+  const supabaseKey = pageData?.dataset.supabaseKey;
+
+  const createLandingBtn = document.getElementById('create-landing-btn') as HTMLButtonElement;
+  const landingsList     = document.getElementById('landings-list') as HTMLElement;
+  const modal            = document.getElementById('landing-modal') as HTMLElement;
+  const closeModalBtn    = document.getElementById('close-modal') as HTMLButtonElement;
+  const cancelBtn        = document.getElementById('cancel-btn') as HTMLButtonElement;
+  const saveLandingBtn   = document.getElementById('save-landing-btn') as HTMLButtonElement;
+  const modalTitle       = document.getElementById('modal-title') as HTMLElement;
+  const slugInput        = document.getElementById('landing-slug') as HTMLInputElement;
+  const slugPreview      = document.getElementById('slug-preview') as HTMLElement;
+  const searchInput      = document.getElementById('search-input') as HTMLInputElement;
+  const filterBtns       = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+
+  let currentLandingId: string | null = null;
+  let userRole: string = '';
+  let allLandings: any[] = [];
+  let activeFilter = 'all';
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('dashboard-ready', async (e: Event) => {
+      const { session, profile } = (e as CustomEvent).detail;
+
+      const { data: hasPermission } = await supabase.rpc('has_module_permission', {
+        user_id: session.user.id, module: 'landings'
+      });
+      if (!hasPermission) { (window as any).dashAlert('Sin permiso para acceder a este módulo', 'error'); window.location.href = '/dashboard'; return; }
+
+      userRole = profile?.role ?? '';
+      if (userRole === 'Analista' && createLandingBtn) createLandingBtn.style.display = 'none';
+
+      await loadLandings();
+    });
+
+    async function loadLandings() {
+      const { data, error } = await supabase
+        .from('landings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        landingsList.innerHTML = `<div class="px-5 py-10 text-center text-gray-500">Error al cargar</div>`;
+        return;
+      }
+
+      allLandings = data ?? [];
+      filterAndRender();
+    }
+
+    function filterAndRender() {
+      const query = searchInput.value.trim().toLowerCase();
+
+      const filtered = allLandings.filter(l => {
+        const matchesSearch = !query ||
+          l.name?.toLowerCase().includes(query) ||
+          l.slug?.toLowerCase().includes(query);
+
+        const matchesFilter =
+          activeFilter === 'all' ||
+          (activeFilter === 'published' && l.published) ||
+          (activeFilter === 'draft' && !l.published) ||
+          (activeFilter === 'home' && l.is_home);
+
+        return matchesSearch && matchesFilter;
+      });
+
+      renderLandings(filtered);
+    }
+
+    function renderLandings(landings: any[]) {
+      if (!landings.length) {
+        landingsList.innerHTML = `<div class="px-5 py-10 text-center text-gray-500">No hay landings que coincidan.</div>`;
+        return;
+      }
+
+      const isAnalyst = userRole === 'Analista';
+
+      landingsList.innerHTML = landings.map(l => `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 hover:bg-gray-700/30 transition-colors">
+          <div class="flex-1 min-w-0">
+            <p class="text-white font-medium text-sm">${esc(l.name)}</p>
+            <p class="text-gray-500 font-mono text-xs mt-0.5">/${esc(l.slug)}</p>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${l.published ? 'bg-green-900/40 text-green-400' : 'bg-gray-700 text-gray-400'}">
+                ${l.published ? 'Publicada' : 'Borrador'}
+              </span>
+              ${l.is_home ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-900/40 text-yellow-400">Principal</span>' : ''}
+              <span class="text-xs text-gray-500">${new Date(l.created_at).toLocaleDateString('es-MX')}</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a href="/${esc(l.slug)}" target="_blank" class="text-xs text-blue-400 hover:underline px-2 py-1">Ver</a>
+            ${isAnalyst ? `<button class="view-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors" data-id="${l.id}">Ver Detalles</button>` : ''}
+            ${!isAnalyst ? `<button class="edit-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors" data-id="${l.id}">Editar</button>` : ''}
+            ${!isAnalyst ? `<button class="copy-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors" data-id="${l.id}">Copiar</button>` : ''}
+            ${!isAnalyst && !l.is_home ? `<button class="home-btn text-xs px-2 py-1 rounded bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/60 transition-colors" data-id="${l.id}">Usar como principal</button>` : ''}
+            ${!isAnalyst && l.is_home ? `<button class="unset-home-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-400 hover:bg-gray-600 transition-colors" data-id="${l.id}">Quitar como principal</button>` : ''}
+            ${!isAnalyst ? `<button class="toggle-btn text-xs px-2 py-1 rounded ${l.published ? 'bg-orange-900/30 text-orange-400 hover:bg-orange-900/60' : 'bg-green-900/30 text-green-400 hover:bg-green-900/60'} transition-colors" data-id="${l.id}" data-published="${l.published}">${l.published ? 'Desactivar' : 'Activar'}</button>` : ''}
+            ${!isAnalyst ? `<button class="delete-btn text-xs px-2 py-1 rounded bg-red-900/30 text-red-400 hover:bg-red-900/60 transition-colors" data-id="${l.id}">Eliminar</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) openModal(id);
+      }));
+      document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) openModal(id, true);
+      }));
+      document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) deleteLanding(id);
+      }));
+      document.querySelectorAll('.copy-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) copyLanding(id);
+      }));
+      document.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', e => {
+        const el = e.target as HTMLElement;
+        const id = el.dataset.id; const published = el.dataset.published === 'true';
+        if (id) toggleLandingStatus(id, published);
+      }));
+      document.querySelectorAll('.home-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) setAsHome(id);
+      }));
+      document.querySelectorAll('.unset-home-btn').forEach(btn => btn.addEventListener('click', e => {
+        const id = (e.target as HTMLElement).dataset.id; if (id) unsetHome(id);
+      }));
+    }
+
+    function openModal(landingId: string | null = null, readOnly = false) {
+      currentLandingId = landingId;
+      const isAnalyst = userRole === 'Analista' || readOnly;
+
+      modalTitle.textContent = landingId
+        ? (isAnalyst ? 'Ver Landing' : 'Editar Landing')
+        : 'Nueva Landing';
+
+      if (landingId) loadLandingData(landingId);
+      else resetForm();
+
+      modal.querySelectorAll('input, textarea, select').forEach(el => {
+        (el as HTMLInputElement).disabled = isAnalyst;
+      });
+      if (saveLandingBtn) saveLandingBtn.style.display = isAnalyst ? 'none' : 'block';
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentLandingId = null;
+    }
+
+    function resetForm() {
+      ['landing-name','landing-slug','landing-h1','landing-h2','meta-title','phone','whatsapp'].forEach(id => {
+        (document.getElementById(id) as HTMLInputElement).value = '';
+      });
+      ['landing-description','meta-description','whatsapp-message'].forEach(id => {
+        (document.getElementById(id) as HTMLTextAreaElement).value = '';
+      });
+      (document.getElementById('hero-type') as HTMLSelectElement).value = 'image';
+      (document.getElementById('hero-file') as HTMLInputElement).value = '';
+      (document.getElementById('whatsapp-button-enabled') as HTMLInputElement).checked = false;
+      (document.getElementById('published') as HTMLInputElement).checked = false;
+      (document.getElementById('current-hero-file') as HTMLElement).textContent = '';
+      if (slugPreview) slugPreview.textContent = 'casas-venta';
+    }
+
+    async function loadLandingData(id: string) {
+      const { data: l, error } = await supabase.from('landings').select('*').eq('id', id).single();
+      if (error) { (window as any).dashAlert('Error al cargar la landing', 'error'); return; }
+
+      (document.getElementById('landing-name') as HTMLInputElement).value = l.name || '';
+      (document.getElementById('landing-slug') as HTMLInputElement).value = l.slug || '';
+      if (slugPreview) slugPreview.textContent = l.slug || '';
+      (document.getElementById('landing-h1') as HTMLInputElement).value = l.h1 || '';
+      (document.getElementById('landing-h2') as HTMLInputElement).value = l.h2 || '';
+      (document.getElementById('landing-description') as HTMLTextAreaElement).value = l.description || '';
+      (document.getElementById('hero-type') as HTMLSelectElement).value = l.hero_type || 'image';
+      (document.getElementById('meta-title') as HTMLInputElement).value = l.meta_title || '';
+      (document.getElementById('meta-description') as HTMLTextAreaElement).value = l.meta_description || '';
+      (document.getElementById('phone') as HTMLInputElement).value = l.phone || '';
+      (document.getElementById('whatsapp') as HTMLInputElement).value = l.whatsapp || '';
+      (document.getElementById('whatsapp-message') as HTMLTextAreaElement).value = l.whatsapp_message || '';
+      (document.getElementById('whatsapp-button-enabled') as HTMLInputElement).checked = l.whatsapp_button_enabled || false;
+      (document.getElementById('published') as HTMLInputElement).checked = l.published || false;
+      if (l.hero_url) (document.getElementById('current-hero-file') as HTMLElement).textContent = 'Archivo actual configurado';
+    }
+
+    const ALLOWED_MIME_TYPES: Record<string, string> = {
+      'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+      'image/gif': 'gif', 'image/svg+xml': 'svg',
+      'video/mp4': 'mp4', 'video/webm': 'webm', 'video/ogg': 'ogv',
+    };
+
+    async function uploadHeroFile(file: File, slug: string): Promise<string> {
+      const ext = ALLOWED_MIME_TYPES[file.type];
+      if (!ext) throw new Error(`Tipo de archivo no permitido: ${file.type}`);
+      const filePath = `heroes/${slug}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('landing-files').upload(filePath, file);
+      if (error) throw error;
+      return supabase.storage.from('landing-files').getPublicUrl(filePath).data.publicUrl;
+    }
+
+    async function saveLanding() {
+      const name = (document.getElementById('landing-name') as HTMLInputElement).value;
+      const slug = (document.getElementById('landing-slug') as HTMLInputElement).value;
+      if (!name || !slug) { (window as any).dashAlert('Completa el nombre y el slug de la landing', 'error'); return; }
+
+      try {
+        const heroFile = (document.getElementById('hero-file') as HTMLInputElement).files?.[0];
+        let heroUrl = '';
+        if (heroFile) {
+          heroUrl = await uploadHeroFile(heroFile, slug);
+        } else if (currentLandingId) {
+          const { data: ex } = await supabase.from('landings').select('hero_url').eq('id', currentLandingId).single();
+          heroUrl = ex?.hero_url || '';
+        }
+
+        const landingData = {
+          name, slug,
+          h1: (document.getElementById('landing-h1') as HTMLInputElement).value,
+          h2: (document.getElementById('landing-h2') as HTMLInputElement).value,
+          description: (document.getElementById('landing-description') as HTMLTextAreaElement).value,
+          hero_type: (document.getElementById('hero-type') as HTMLSelectElement).value,
+          hero_url: heroUrl,
+          meta_title: (document.getElementById('meta-title') as HTMLInputElement).value,
+          meta_description: (document.getElementById('meta-description') as HTMLTextAreaElement).value,
+          phone: (document.getElementById('phone') as HTMLInputElement).value,
+          whatsapp: (document.getElementById('whatsapp') as HTMLInputElement).value,
+          whatsapp_message: (document.getElementById('whatsapp-message') as HTMLTextAreaElement).value,
+          whatsapp_button_enabled: (document.getElementById('whatsapp-button-enabled') as HTMLInputElement).checked,
+          published: (document.getElementById('published') as HTMLInputElement).checked,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (currentLandingId) {
+          const { error } = await supabase.from('landings').update(landingData).eq('id', currentLandingId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('landings').insert([landingData]);
+          if (error) throw error;
+        }
+
+        closeModal();
+        await loadLandings();
+        (window as any).dashAlert(currentLandingId ? 'Landing actualizada' : 'Landing creada', 'success');
+      } catch (err) {
+        console.error(err);
+        (window as any).dashAlert('Error al guardar la landing', 'error');
+      }
+    }
+
+    async function deleteLanding(id: string) {
+      if (!await (window as any).dashConfirm('¿Eliminar esta landing? Esta acción no se puede deshacer.')) return;
+      const { error } = await supabase.from('landings').delete().eq('id', id);
+      if (error) { (window as any).dashAlert('Error al eliminar', 'error'); return; }
+      await loadLandings();
+      (window as any).dashAlert('Landing eliminada', 'success');
+    }
+
+    async function copyLanding(id: string) {
+      const { data: l, error } = await supabase.from('landings').select('*').eq('id', id).single();
+      if (error) { (window as any).dashAlert('Error al copiar', 'error'); return; }
+      const { id: _id, created_at, updated_at, is_home: _is_home, ...rest } = l;
+      const { error: insertError } = await supabase.from('landings').insert([{
+        ...rest,
+        name: `${l.name} (Copia)`,
+        slug: `${l.slug}-copia-${Date.now()}`,
+        published: false,
+        is_home: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }]);
+      if (insertError) { (window as any).dashAlert('Error al copiar', 'error'); return; }
+      await loadLandings();
+      (window as any).dashAlert('Landing copiada exitosamente', 'success');
+    }
+
+    async function setAsHome(id: string) {
+      if (!await (window as any).dashConfirm('¿Usar esta landing como página principal (/)?')) return;
+      await supabase.from('landings').update({ is_home: false }).eq('is_home', true);
+      const { error } = await supabase.from('landings').update({ is_home: true }).eq('id', id);
+      if (error) { (window as any).dashAlert('Error al establecer landing principal', 'error'); return; }
+      await loadLandings();
+      (window as any).dashAlert('Landing establecida como principal', 'success');
+    }
+
+    async function unsetHome(id: string) {
+      if (!await (window as any).dashConfirm('¿Quitar esta landing como página principal? La ruta / mostrará un 404 hasta que asignes otra.')) return;
+      const { error } = await supabase.from('landings').update({ is_home: false }).eq('id', id);
+      if (error) { (window as any).dashAlert('Error al quitar landing principal', 'error'); return; }
+      await loadLandings();
+      (window as any).dashAlert('Landing ya no es la principal', 'info');
+    }
+
+    async function toggleLandingStatus(id: string, current: boolean) {
+      if (!await (window as any).dashConfirm(`¿${current ? 'Desactivar' : 'Activar'} esta landing?`)) return;
+      const { error } = await supabase.from('landings').update({ published: !current }).eq('id', id);
+      if (error) { (window as any).dashAlert('Error al cambiar estado', 'error'); return; }
+      await loadLandings();
+      (window as any).dashAlert(current ? 'Landing desactivada' : 'Landing activada', 'success');
+    }
+
+    searchInput?.addEventListener('input', () => filterAndRender());
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.filter ?? 'all';
+        filterBtns.forEach(b => {
+          b.classList.remove('active-filter', 'bg-blue-600', 'text-white');
+          b.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
+        });
+        btn.classList.add('active-filter', 'bg-blue-600', 'text-white');
+        btn.classList.remove('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
+        filterAndRender();
+      });
+    });
+
+    slugInput?.addEventListener('input', e => {
+      if (slugPreview) slugPreview.textContent = (e.target as HTMLInputElement).value || 'casas-venta';
+    });
+
+    createLandingBtn?.addEventListener('click', () => openModal());
+    closeModalBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    saveLandingBtn?.addEventListener('click', saveLanding);
+  }
+</script>

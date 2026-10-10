@@ -1,0 +1,52 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LandingNav from '../components/landing/LandingNav.astro';
+import LandingHero from '../components/landing/LandingHero.astro';
+import StatsBar from '../components/landing/StatsBar.astro';
+import AboutSection from '../components/landing/AboutSection.astro';
+import ServicesSection from '../components/landing/ServicesSection.astro';
+import PartnersBar from '../components/landing/PartnersBar.astro';
+import PropertiesSection from '../components/landing/PropertiesSection.astro';
+import TestimonialsSection from '../components/landing/TestimonialsSection.astro';
+import ContactSection from '../components/landing/ContactSection.astro';
+import LandingFooter from '../components/landing/LandingFooter.astro';
+import WhatsAppButton from '../components/landing/WhatsAppButton.astro';
+import { createClient } from '@supabase/supabase-js';
+
+export const prerender = false;
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseKey = import.meta.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const { data: landing, error } = await supabase
+	.from('landings')
+	.select('*')
+	.eq('is_home', true)
+	.eq('published', true)
+	.maybeSingle();
+
+if (!landing || error) {
+	return Astro.redirect('/404');
+}
+---
+
+<Layout
+	title={landing.meta_title || landing.name}
+	description={landing.meta_description}
+	ogImage={landing.hero_type !== 'video' ? landing.hero_url : undefined}
+>
+	<LandingNav phone={landing.phone} />
+	<LandingHero h1={landing.h1} description={landing.description} hero_url={landing.hero_url} hero_type={landing.hero_type} />
+	<StatsBar />
+	<AboutSection h2={landing.h2} />
+	<ServicesSection />
+	<PartnersBar />
+	<PropertiesSection />
+	<TestimonialsSection />
+	<ContactSection landingId={landing.id} />
+	<LandingFooter />
+	{landing.whatsapp_button_enabled && landing.whatsapp && (
+		<WhatsAppButton whatsapp={landing.whatsapp} message={landing.whatsapp_message} />
+	)}
+</Layout>

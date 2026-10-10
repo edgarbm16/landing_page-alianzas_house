@@ -1,0 +1,18 @@
+---
+import ContactForm from './ContactForm.astro';
+
+interface Props {
+	landingId?: string;
+}
+const { landingId } = Astro.props;
+---
+
+<section id="contacto" class="bg-white py-20 lg:py-28">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="text-center max-w-2xl mx-auto mb-10">
+			<h2 class="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">Contáctanos</h2>
+			<p class="text-xl text-gray-500">¿Listo para encontrar tu propiedad ideal? Déjanos tus datos y un asesor te contactará en menos de 24 horas.</p>
+		</div>
+		<ContactForm landingId={landingId} />
+	</div>
+</section>

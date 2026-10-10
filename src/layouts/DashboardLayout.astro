@@ -1,0 +1,317 @@
+---
+import Layout from './Layout.astro';
+
+interface Props {
+  title: string;
+  activeNav: 'resumen' | 'prospects' | 'landings' | 'emails' | 'users' | 'settings';
+  pageTitle: string;
+}
+
+const { title, activeNav, pageTitle } = Astro.props;
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+
+function navClass(key: string) {
+  return key === activeNav
+    ? 'flex items-center gap-3 px-2 py-2 rounded-lg bg-gray-700 text-white font-medium text-sm'
+    : 'flex items-center gap-3 px-2 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors text-sm';
+}
+---
+
+<Layout title={title}>
+  <div id="app-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <!-- Loading state -->
+  <div id="app-loader" class="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-10 h-10 border-4 border-gray-600 border-t-blue-500 rounded-full animate-spin"></div>
+      <p class="text-gray-400 text-sm">Verificando acceso...</p>
+    </div>
+  </div>
+
+  <!-- Dashboard wrapper -->
+  <div id="dashboard-wrapper" class="hidden bg-gray-900 min-h-screen">
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/80 z-30 hidden"></div>
+
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 h-full w-64 bg-gray-800 border-r border-gray-700 transition-transform duration-300">
+      <div class="flex flex-col h-full py-4 px-3">
+
+        <div class="flex items-center gap-3 px-2 mb-6 min-h-[40px]">
+          <img id="sidebar-logo" src="" alt="Logo" class="h-8 object-contain hidden" />
+          <span id="sidebar-company" class="text-white font-semibold text-base truncate">Panel Admin</span>
+        </div>
+
+        <nav class="flex-1 space-y-1 overflow-y-auto">
+          <a href="/dashboard" class={navClass('resumen')}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+            </svg>
+            Resumen
+          </a>
+
+          <a href="/dashboard/prospects" class={navClass('prospects')}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+            </svg>
+            Prospectos
+          </a>
+
+          <a href="/dashboard/landings" class={navClass('landings')}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"/>
+            </svg>
+            Landings
+          </a>
+
+          <a id="nav-emails" href="/dashboard/emails" class={`hidden items-center gap-3 px-2 py-2 rounded-lg transition-colors text-sm ${activeNav === 'emails' ? 'bg-gray-700 text-white font-medium' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+            </svg>
+            Correos
+          </a>
+
+          <a id="nav-users" href="/dashboard/users" class={`hidden items-center gap-3 px-2 py-2 rounded-lg transition-colors text-sm ${activeNav === 'users' ? 'bg-gray-700 text-white font-medium' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            Usuarios
+          </a>
+
+          <a id="nav-settings" href="/dashboard/settings" class={`hidden items-center gap-3 px-2 py-2 rounded-lg transition-colors text-sm ${activeNav === 'settings' ? 'bg-gray-700 text-white font-medium' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}>
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+            </svg>
+            Configuración
+          </a>
+        </nav>
+
+        <div class="pt-4 border-t border-gray-700 space-y-2">
+          <p id="sidebar-user-email" class="px-2 text-xs text-gray-400 truncate"></p>
+          <button id="logout-btn" class="flex cursor-pointer w-full items-center gap-3 px-2 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors text-sm">
+            <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
+            </svg>
+            Cerrar sesión
+          </button>
+        </div>
+
+      </div>
+    </aside>
+
+    <div id="main-area" class="transition-all duration-300">
+      <nav class="fixed top-0 right-0 z-30 h-16 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-4" id="top-navbar">
+        <button id="sidebar-toggle" class="text-gray-400 hover:text-white md:hidden">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+        <p class="text-white font-semibold text-sm flex-1">{pageTitle}</p>
+        <span id="nav-user-name" class="hidden sm:block text-sm text-white font-medium truncate max-w-xs"></span>
+      </nav>
+
+      <main class="pt-20 px-4 md:px-6 space-y-6">
+        <slot />
+      </main>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-200 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Confirm dialog -->
+  <div id="confirm-dialog" class="fixed inset-0 z-200 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
+      <p id="confirm-message" class="text-white text-sm leading-relaxed mb-6"></p>
+      <div class="flex justify-end gap-3">
+        <button id="confirm-cancel" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium transition-colors">
+          Cancelar
+        </button>
+        <button id="confirm-ok" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const appData        = document.getElementById('app-data') as HTMLElement;
+  const appLoader      = document.getElementById('app-loader') as HTMLElement;
+  const dashWrapper    = document.getElementById('dashboard-wrapper') as HTMLElement;
+  const sidebar        = document.getElementById('sidebar') as HTMLElement;
+  const sidebarOverlay = document.getElementById('sidebar-overlay') as HTMLElement;
+  const sidebarToggle  = document.getElementById('sidebar-toggle') as HTMLButtonElement;
+  const mainArea       = document.getElementById('main-area') as HTMLElement;
+  const topNavbar      = document.getElementById('top-navbar') as HTMLElement;
+  const logoutBtn      = document.getElementById('logout-btn') as HTMLButtonElement;
+  const navEmails      = document.getElementById('nav-emails') as HTMLElement;
+  const navUsers       = document.getElementById('nav-users') as HTMLElement;
+  const navSettings    = document.getElementById('nav-settings') as HTMLElement;
+  const sidebarEmail   = document.getElementById('sidebar-user-email') as HTMLElement;
+  const navUserName    = document.getElementById('nav-user-name') as HTMLElement;
+
+  const supabaseUrl = appData?.dataset.supabaseUrl;
+  const supabaseKey = appData?.dataset.supabaseKey;
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    function applyLayout() {
+      const isDesktop = window.innerWidth >= 768;
+      if (isDesktop) {
+        sidebar.style.removeProperty('transform');
+        mainArea.style.marginLeft = '256px';
+        topNavbar.style.left = '256px';
+      } else {
+        if (!sidebar.classList.contains('sidebar-open')) {
+          sidebar.style.transform = 'translateX(-100%)';
+        }
+        mainArea.style.marginLeft = '0';
+        topNavbar.style.left = '0';
+      }
+    }
+
+    function openSidebar() {
+      sidebar.style.transform = 'translateX(0)';
+      sidebar.classList.add('sidebar-open');
+      sidebarOverlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+      sidebar.style.transform = 'translateX(-100%)';
+      sidebar.classList.remove('sidebar-open');
+      sidebarOverlay.classList.add('hidden');
+    }
+
+    sidebarToggle?.addEventListener('click', () => {
+      sidebar.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+    });
+    sidebarOverlay?.addEventListener('click', closeSidebar);
+    window.addEventListener('resize', applyLayout);
+
+    window.addEventListener('settings-loaded', ((e: CustomEvent) => {
+      const { company_name, logo_url } = e.detail;
+      const logoEl = document.getElementById('sidebar-logo') as HTMLImageElement;
+      const nameEl = document.getElementById('sidebar-company') as HTMLElement;
+      if (logoEl && logo_url) { logoEl.src = logo_url; logoEl.classList.remove('hidden'); }
+      if (nameEl && company_name) nameEl.textContent = company_name;
+    }) as EventListener);
+
+    logoutBtn?.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      localStorage.removeItem('supabase_session');
+      window.location.href = '/login';
+    });
+
+    async function initLayout() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) { window.location.href = '/login'; return; }
+
+        const email = session.user.email ?? '';
+        if (sidebarEmail) sidebarEmail.textContent = email;
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('role, full_name')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        const displayName = (profile as any)?.full_name
+          ?? (session.user.user_metadata?.full_name as string | undefined)
+          ?? email.split('@')[0];
+        if (navUserName) navUserName.textContent = displayName;
+
+        if (profile && ['Administrador', 'Gestor'].includes(profile.role)) {
+          navUsers?.classList.replace('hidden', 'flex');
+        }
+
+        const [{ data: hasEmails }, { data: hasSettings }] = await Promise.all([
+          supabase.rpc('has_module_permission', { user_id: session.user.id, module: 'emails' }),
+          supabase.rpc('has_module_permission', { user_id: session.user.id, module: 'settings' }),
+        ]);
+
+        if (hasEmails)   navEmails?.classList.replace('hidden', 'flex');
+        if (hasSettings) navSettings?.classList.replace('hidden', 'flex');
+
+        appLoader.classList.add('hidden');
+        dashWrapper.classList.remove('hidden');
+        applyLayout();
+
+        window.dispatchEvent(new CustomEvent('dashboard-ready', { detail: { session, profile } }));
+      } catch {
+        window.location.href = '/login';
+      }
+    }
+
+    initLayout();
+
+    // ── Global UI helpers ─────────────────────────────────────
+    (window as any).dashAlert = function(
+      message: string,
+      type: 'success' | 'error' | 'info' = 'info'
+    ) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const styles: Record<string, string> = {
+        success: 'bg-gray-800 border-green-700 text-green-400',
+        error:   'bg-gray-800 border-red-700 text-red-400',
+        info:    'bg-gray-800 border-gray-600 text-gray-200',
+      };
+      const icons: Record<string, string> = {
+        success: '<svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+        error:   '<svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+        info:    '<svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>',
+      };
+
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-lg border shadow-xl text-sm max-w-xs translate-x-full opacity-0 transition-all duration-300 ${styles[type]}`;
+      toast.innerHTML = `${icons[type]}<span>${message}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    };
+
+    (window as any).dashConfirm = function(message: string): Promise<boolean> {
+      return new Promise(resolve => {
+        const dialog    = document.getElementById('confirm-dialog') as HTMLElement;
+        const msgEl     = document.getElementById('confirm-message') as HTMLElement;
+        const okBtn     = document.getElementById('confirm-ok') as HTMLButtonElement;
+        const cancelBtn = document.getElementById('confirm-cancel') as HTMLButtonElement;
+
+        if (!dialog || !msgEl) { resolve(false); return; }
+
+        msgEl.textContent = message;
+        dialog.classList.remove('hidden');
+        dialog.classList.add('flex');
+
+        function cleanup(result: boolean) {
+          dialog.classList.add('hidden');
+          dialog.classList.remove('flex');
+          resolve(result);
+        }
+
+        okBtn?.addEventListener('click', () => cleanup(true), { once: true });
+        cancelBtn?.addEventListener('click', () => cleanup(false), { once: true });
+      });
+    };
+  }
+</script>

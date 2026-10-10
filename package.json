@@ -1,0 +1,25 @@
+{
+  "name": "@example/basics",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "supa": "supabase"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.5.2",
+    "@astrojs/vercel": "^9.0.5",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@supabase/supabase-js": "^2.93.3",
+    "@tailwindcss/vite": "^4.2.4",
+    "astro": "^5.2.5",
+    "tailwindcss": "^4.2.4"
+  },
+  "devDependencies": {
+    "supabase": "^2.95.2"
+  }
+}

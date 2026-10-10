@@ -1,0 +1,407 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<DashboardLayout title="Prospectos" activeNav="prospects" pageTitle="Gestión de Prospectos">
+  <div id="page-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <!-- Filters -->
+  <div class="bg-gray-800 rounded-lg p-5 shadow space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="sm:col-span-2 flex flex-col gap-1">
+        <label class="text-xs font-medium text-gray-400 uppercase">Buscar</label>
+        <input
+          type="text"
+          id="search-filter"
+          placeholder="Nombre, email o teléfono..."
+          class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs font-medium text-gray-400 uppercase">Ordenar por</label>
+        <select id="sort-filter" class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="created_at_desc">Más reciente</option>
+          <option value="created_at_asc">Más antiguo</option>
+          <option value="rating_desc">Mayor calificación</option>
+          <option value="rating_asc">Menor calificación</option>
+          <option value="name_asc">Nombre A-Z</option>
+          <option value="name_desc">Nombre Z-A</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-700">
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-gray-400">Total:</span>
+        <span id="total-count" class="text-white font-bold">0</span>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-gray-400">Nuevos:</span>
+        <span id="nuevo-count" class="text-blue-400 font-bold">0</span>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-gray-400">Calificados:</span>
+        <span id="calificado-count" class="text-green-400 font-bold">0</span>
+      </div>
+      <button id="clear-filters" class="ml-auto text-xs text-gray-400 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-colors">
+        Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Prospects grid -->
+  <div id="prospects-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div class="col-span-full text-center py-12 text-gray-500">Cargando...</div>
+  </div>
+
+  <!-- Modal -->
+  <div id="prospect-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="modal-overlay"></div>
+    <div class="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700 sticky top-0 bg-gray-800 rounded-t-xl z-10">
+        <p class="text-white font-semibold text-lg">Detalles del Prospecto</p>
+        <button id="close-modal" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+        <!-- Contact info -->
+        <div class="space-y-3">
+          <p class="text-xs font-medium text-gray-400 uppercase">Información de Contacto</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Nombre</p>
+              <p id="detail-name" class="text-white font-medium"></p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Fecha de registro</p>
+              <p id="detail-date" class="text-gray-300 text-sm"></p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Email</p>
+              <a id="detail-email" class="text-blue-400 hover:underline text-sm" href=""></a>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Teléfono</p>
+              <a id="detail-phone" class="text-blue-400 hover:underline text-sm" href=""></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prospect info -->
+        <div class="space-y-3 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">Información del Prospecto</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Interés</p>
+              <span id="detail-interest" class="inline-block px-2 py-0.5 rounded text-xs font-medium bg-blue-900/40 text-blue-300"></span>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Presupuesto</p>
+              <p id="detail-budget" class="text-gray-300 text-sm"></p>
+            </div>
+            <div class="sm:col-span-2">
+              <p class="text-xs text-gray-500 mb-1">Mensaje</p>
+              <p id="detail-message" class="text-gray-300 text-sm bg-gray-700/50 rounded-lg px-3 py-2 whitespace-pre-wrap"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating -->
+        <div class="space-y-3 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">Calificación</p>
+          <div id="rating-input" class="flex gap-2">
+            <button class="star text-3xl text-gray-600 hover:text-yellow-400 transition-colors cursor-pointer" data-rating="1">★</button>
+            <button class="star text-3xl text-gray-600 hover:text-yellow-400 transition-colors cursor-pointer" data-rating="2">★</button>
+            <button class="star text-3xl text-gray-600 hover:text-yellow-400 transition-colors cursor-pointer" data-rating="3">★</button>
+            <button class="star text-3xl text-gray-600 hover:text-yellow-400 transition-colors cursor-pointer" data-rating="4">★</button>
+            <button class="star text-3xl text-gray-600 hover:text-yellow-400 transition-colors cursor-pointer" data-rating="5">★</button>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="space-y-3 pt-4 border-t border-gray-700">
+          <p class="text-xs font-medium text-gray-400 uppercase">Observaciones Internas</p>
+          <textarea
+            id="detail-notes"
+            rows="4"
+            placeholder="Agregar observaciones sobre este prospecto..."
+            class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          ></textarea>
+        </div>
+
+      </div>
+
+      <div class="flex justify-between px-6 py-4 border-t border-gray-700 sticky bottom-0 bg-gray-800 rounded-b-xl">
+        <button id="delete-prospect" class="px-4 py-2 rounded-lg bg-red-900/30 border border-red-700 text-red-400 hover:bg-red-900/60 text-sm font-medium transition-colors">
+          Eliminar Prospecto
+        </button>
+        <button id="save-prospect" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+          Guardar Cambios
+        </button>
+      </div>
+
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  function esc(s: any): string {
+    return (s ?? '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const pageData     = document.getElementById('page-data') as HTMLElement;
+  const supabaseUrl  = pageData?.dataset.supabaseUrl;
+  const supabaseKey  = pageData?.dataset.supabaseKey;
+
+  const searchFilter    = document.getElementById('search-filter') as HTMLInputElement;
+  const sortFilter      = document.getElementById('sort-filter') as HTMLSelectElement;
+  const clearFiltersBtn = document.getElementById('clear-filters') as HTMLButtonElement;
+  const prospectsList   = document.getElementById('prospects-list') as HTMLElement;
+  const modal           = document.getElementById('prospect-modal') as HTMLElement;
+  const closeModalBtn   = document.getElementById('close-modal') as HTMLButtonElement;
+  const modalOverlay    = document.getElementById('modal-overlay') as HTMLElement;
+  const saveProspectBtn  = document.getElementById('save-prospect') as HTMLButtonElement;
+  const deleteProspectBtn = document.getElementById('delete-prospect') as HTMLButtonElement;
+
+  let allProspects: any[] = [];
+  let currentProspectId: string | null = null;
+  let currentRating: number | null = null;
+  let userRole: string = '';
+
+  const interestLabels: Record<string, string> = {
+    comprar: 'Comprar', rentar: 'Rentar', vender: 'Vender', invertir: 'Invertir',
+  };
+  const budgetLabels: Record<string, string> = {
+    '0-200k': 'Menos de $200,000',
+    '200k-500k': '$200,000 - $500,000',
+    '500k-1m': '$500,000 - $1,000,000',
+    '1m+': 'Más de $1,000,000',
+  };
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('dashboard-ready', async (e: Event) => {
+      const { session, profile } = (e as CustomEvent).detail;
+
+      const { data: hasPermission } = await supabase.rpc('has_module_permission', {
+        user_id: session.user.id, module: 'prospects'
+      });
+      if (!hasPermission) { (window as any).dashAlert('Sin permiso para acceder a este módulo', 'error'); window.location.href = '/dashboard'; return; }
+
+      userRole = profile?.role ?? '';
+      await loadProspects();
+    });
+
+    async function loadProspects() {
+      const { data, error } = await supabase
+        .from('prospects')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { console.error(error); return; }
+      allProspects = data || [];
+      applyFilters();
+    }
+
+    function applyFilters() {
+      let filtered = [...allProspects];
+      const q = searchFilter.value.toLowerCase().trim();
+      if (q) filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        p.phone.includes(q)
+      );
+
+      const sort = sortFilter.value;
+      filtered.sort((a, b) => {
+        switch (sort) {
+          case 'created_at_asc': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          case 'rating_desc': return (b.rating || 0) - (a.rating || 0);
+          case 'rating_asc': return (a.rating || 0) - (b.rating || 0);
+          case 'name_asc': return a.name.localeCompare(b.name);
+          case 'name_desc': return b.name.localeCompare(a.name);
+          default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+      });
+
+      document.getElementById('total-count')!.textContent = allProspects.length.toString();
+      document.getElementById('nuevo-count')!.textContent = allProspects.filter(p => p.status === 'nuevo').length.toString();
+      document.getElementById('calificado-count')!.textContent = allProspects.filter(p => p.status === 'calificado').length.toString();
+
+      renderProspects(filtered);
+    }
+
+    function renderProspects(prospects: any[]) {
+      if (!prospects.length) {
+        prospectsList.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">No hay prospectos para mostrar</div>';
+        return;
+      }
+
+      prospectsList.innerHTML = prospects.map(p => {
+        const date = new Date(p.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+        const stars = p.rating
+          ? `<span class="text-yellow-400">${'★'.repeat(p.rating)}</span><span class="text-gray-600">${'★'.repeat(5 - p.rating)}</span>`
+          : '<span class="text-gray-600">★★★★★</span>';
+
+        return `
+          <div class="bg-gray-800 border border-gray-700 rounded-lg p-4 cursor-pointer hover:border-gray-500 hover:bg-gray-750 transition-all"
+               data-prospect-id="${esc(p.id)}">
+            <div class="flex items-start justify-between gap-2 pb-3 mb-3 border-b border-gray-700">
+              <p class="text-white font-semibold text-sm">${esc(p.name)}</p>
+              <div class="text-sm shrink-0">${stars}</div>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <p class="flex items-center gap-2 text-gray-400">
+                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                ${esc(p.email)}
+              </p>
+              <p class="flex items-center gap-2 text-gray-400">
+                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                ${esc(p.phone)}
+              </p>
+              <p class="flex items-center gap-2 text-gray-400">
+                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/></svg>
+                <span class="text-blue-300">${esc(interestLabels[p.interest] ?? p.interest)}</span>
+              </p>
+              <p class="flex items-center gap-2 text-gray-400">
+                <svg class="w-4 h-4 shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/></svg>
+                ${esc(budgetLabels[p.budget] ?? p.budget)}
+              </p>
+            </div>
+            <div class="flex items-center justify-between pt-3 mt-3 border-t border-gray-700">
+              <span class="flex items-center gap-1.5 text-xs text-gray-500">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+                ${date}
+              </span>
+              <div class="flex gap-1" onclick="event.stopPropagation()">
+                <a href="mailto:${esc(p.email)}" class="w-7 h-7 flex items-center justify-center rounded bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white transition-colors" title="Email">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                </a>
+                <a href="tel:${esc(p.phone)}" class="w-7 h-7 flex items-center justify-center rounded bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white transition-colors" title="Llamar">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                </a>
+                <a href="https://wa.me/${p.phone.replace(/\D/g, '')}" target="_blank" class="w-7 h-7 flex items-center justify-center rounded bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white transition-colors" title="WhatsApp">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    prospectsList.addEventListener('click', e => {
+      const card = (e.target as HTMLElement).closest('[data-prospect-id]') as HTMLElement | null;
+      if (card) {
+        const id = card.dataset.prospectId;
+        if (id) (window as any).openProspectModal(id);
+      }
+    });
+
+    (window as any).openProspectModal = function(prospectId: string) {
+      const p = allProspects.find(x => x.id === prospectId);
+      if (!p) return;
+
+      currentProspectId = prospectId;
+      currentRating = p.rating || null;
+
+      document.getElementById('detail-name')!.textContent = p.name;
+      const emailEl = document.getElementById('detail-email') as HTMLAnchorElement;
+      emailEl.textContent = p.email; emailEl.href = `mailto:${p.email}`;
+      const phoneEl = document.getElementById('detail-phone') as HTMLAnchorElement;
+      phoneEl.textContent = p.phone; phoneEl.href = `tel:${p.phone}`;
+      document.getElementById('detail-date')!.textContent = new Date(p.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      document.getElementById('detail-interest')!.textContent = interestLabels[p.interest] ?? p.interest;
+      document.getElementById('detail-budget')!.textContent = budgetLabels[p.budget] ?? p.budget;
+      document.getElementById('detail-message')!.textContent = p.message || 'Sin mensaje';
+      (document.getElementById('detail-notes') as HTMLTextAreaElement).value = p.notes || '';
+
+      const isAnalyst = userRole === 'Analista';
+      (document.getElementById('detail-notes') as HTMLTextAreaElement).disabled = isAnalyst;
+      document.querySelectorAll('.star').forEach(s => {
+        (s as HTMLElement).style.pointerEvents = isAnalyst ? 'none' : 'auto';
+        (s as HTMLElement).style.opacity = isAnalyst ? '0.5' : '1';
+      });
+      if (saveProspectBtn) saveProspectBtn.style.display = isAnalyst ? 'none' : 'block';
+      if (deleteProspectBtn) deleteProspectBtn.style.display = isAnalyst ? 'none' : 'block';
+
+      updateStarDisplay();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    function updateStarDisplay() {
+      document.querySelectorAll('.star').forEach((star, i) => {
+        star.classList.toggle('text-yellow-400', !!currentRating && i < currentRating);
+        star.classList.toggle('text-gray-600', !currentRating || i >= currentRating);
+      });
+    }
+
+    document.querySelectorAll('.star').forEach(star => {
+      star.addEventListener('click', () => {
+        currentRating = parseInt((star as HTMLElement).dataset.rating || '0');
+        updateStarDisplay();
+      });
+    });
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentProspectId = null;
+      currentRating = null;
+    }
+
+    closeModalBtn?.addEventListener('click', closeModal);
+    modalOverlay?.addEventListener('click', closeModal);
+
+    saveProspectBtn?.addEventListener('click', async () => {
+      if (!currentProspectId) return;
+      try {
+        const notes = (document.getElementById('detail-notes') as HTMLTextAreaElement).value;
+        const updateData: any = { notes };
+        if (currentRating) { updateData.rating = currentRating; updateData.status = 'calificado'; }
+        const { error } = await supabase.from('prospects').update(updateData).eq('id', currentProspectId);
+        if (error) throw error;
+        closeModal();
+        await loadProspects();
+        (window as any).dashAlert('Prospecto actualizado', 'success');
+      } catch (err) {
+        console.error(err);
+        (window as any).dashAlert('Error al actualizar el prospecto', 'error');
+      }
+    });
+
+    deleteProspectBtn?.addEventListener('click', async () => {
+      if (!currentProspectId) return;
+      if (!await (window as any).dashConfirm('¿Eliminar este prospecto? Esta acción no se puede deshacer.')) return;
+      try {
+        const { error } = await supabase.from('prospects').delete().eq('id', currentProspectId);
+        if (error) throw error;
+        closeModal();
+        await loadProspects();
+        (window as any).dashAlert('Prospecto eliminado', 'success');
+      } catch (err) {
+        console.error(err);
+        (window as any).dashAlert('Error al eliminar el prospecto', 'error');
+      }
+    });
+
+    searchFilter?.addEventListener('input', applyFilters);
+    sortFilter?.addEventListener('change', applyFilters);
+    clearFiltersBtn?.addEventListener('click', () => {
+      searchFilter.value = '';
+      sortFilter.value = 'created_at_desc';
+      applyFilters();
+    });
+  }
+</script>

@@ -1,0 +1,167 @@
+---
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+
+interface Props {
+	landingId?: string;
+}
+
+const { landingId } = Astro.props;
+---
+
+<div class="w-full max-w-2xl mx-auto">
+	<form
+		id="contactForm"
+		data-supabase-url={supabaseUrl}
+		data-supabase-key={supabaseAnonKey}
+		data-landing-id={landingId}
+		class="flex flex-col gap-6"
+	>
+		<!-- Name + Email row -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			<div class="flex flex-col gap-2">
+				<label for="name" class="text-sm font-medium text-gray-900">Nombre completo</label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					required
+					placeholder="Juan Pérez"
+					class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+				/>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="email" class="text-sm font-medium text-gray-900">Correo electrónico</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					required
+					placeholder="juan@ejemplo.com"
+					class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+				/>
+			</div>
+		</div>
+
+		<!-- Phone + Interest row -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			<div class="flex flex-col gap-2">
+				<label for="phone" class="text-sm font-medium text-gray-900">Teléfono</label>
+				<input
+					type="tel"
+					id="phone"
+					name="phone"
+					required
+					placeholder="+52 55 1234 5678"
+					class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+				/>
+			</div>
+			<div class="flex flex-col gap-2">
+				<label for="interest" class="text-sm font-medium text-gray-900">Me interesa</label>
+				<select
+					id="interest"
+					name="interest"
+					required
+					class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+				>
+					<option value="">Selecciona una opción</option>
+					<option value="comprar">Comprar</option>
+					<option value="rentar">Rentar</option>
+					<option value="vender">Vender</option>
+					<option value="invertir">Invertir</option>
+				</select>
+			</div>
+		</div>
+
+		<!-- Budget -->
+		<div class="flex flex-col gap-2">
+			<label for="budget" class="text-sm font-medium text-gray-900">Presupuesto aproximado</label>
+			<select
+				id="budget"
+				name="budget"
+				required
+				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+			>
+				<option value="">Selecciona un rango</option>
+				<option value="0-200k">Menos de $200,000</option>
+				<option value="200k-500k">$200,000 - $500,000</option>
+				<option value="500k-1m">$500,000 - $1,000,000</option>
+				<option value="1m+">Más de $1,000,000</option>
+			</select>
+		</div>
+
+		<!-- Message -->
+		<div class="flex flex-col gap-2">
+			<label for="message" class="text-sm font-medium text-gray-900">Mensaje</label>
+			<textarea
+				id="message"
+				name="message"
+				rows="5"
+				placeholder="Cuéntanos qué estás buscando..."
+				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+			></textarea>
+		</div>
+
+		<!-- Submit -->
+		<div>
+			<button
+				type="submit"
+				id="submit-btn"
+				class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+			>
+				<span id="submit-btn-text">Enviar mensaje</span>
+				<span id="submit-btn-loader" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+			</button>
+		</div>
+	</form>
+</div>
+
+<script>
+	const form       = document.getElementById('contactForm')   as HTMLFormElement;
+	const submitBtn  = document.getElementById('submit-btn')    as HTMLButtonElement;
+	const btnText    = document.getElementById('submit-btn-text')   as HTMLElement;
+	const btnLoader  = document.getElementById('submit-btn-loader') as HTMLElement;
+
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+
+		submitBtn.disabled = true;
+		btnText.classList.add('hidden');
+		btnLoader.classList.remove('hidden');
+
+		try {
+			const formData   = new FormData(e.target as HTMLFormElement);
+			const data       = Object.fromEntries(formData.entries());
+			const supabaseUrl = form.dataset.supabaseUrl;
+			const supabaseKey = form.dataset.supabaseKey;
+			const landingId   = form.dataset.landingId;
+
+			if (!supabaseUrl || !supabaseKey) throw new Error('Configuración no disponible');
+
+			const payload: any = { ...data };
+			if (landingId) payload.landing_id = landingId;
+
+			const response = await fetch(`${supabaseUrl}/functions/v1/send-contact-email`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${supabaseKey}`,
+					'apikey': supabaseKey,
+				},
+				body: JSON.stringify(payload),
+			});
+
+			const result = await response.json();
+			if (!response.ok) throw new Error(result?.error || 'Error al enviar el formulario');
+
+			window.location.href = '/gracias';
+		} catch (error) {
+			console.error(error);
+			const msg = error instanceof Error ? error.message : 'Error desconocido';
+			alert(`Error al enviar:\n\n${msg}\n\nPor favor intenta de nuevo.`);
+			submitBtn.disabled = false;
+			btnText.classList.remove('hidden');
+			btnLoader.classList.add('hidden');
+		}
+	});
+</script>

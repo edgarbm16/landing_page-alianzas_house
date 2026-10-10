@@ -1,0 +1,40 @@
+---
+import SectionHeader from './SectionHeader.astro';
+
+const services = [
+	{ icon: '🏠', title: 'Compra y Venta',  desc: 'Asesoría integral para transacciones inmobiliarias' },
+	{ icon: '🔑', title: 'Renta',            desc: 'Gestión y administración de propiedades en renta' },
+	{ icon: '📋', title: 'Valuación',        desc: 'Valuación profesional certificada de tu propiedad' },
+	{ icon: '⚖️', title: 'Asesoría Legal',  desc: 'Contratos y trámites notariales seguros' },
+];
+---
+
+<section id="servicios" class="bg-gray-50 py-20 lg:py-28">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+			<div>
+				<SectionHeader
+					badge="Nuestros Servicios"
+					title="Todo lo que necesitas para tu inmueble"
+					subtitle="Desde la búsqueda inicial hasta el cierre de la operación, te acompañamos en cada etapa del proceso."
+					align="left"
+					class="mb-8"
+				/>
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+					{services.map(s => (
+						<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+							<div class="text-2xl mb-2">{s.icon}</div>
+							<h3 class="font-semibold text-gray-900 text-sm mb-1">{s.title}</h3>
+							<p class="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+						</div>
+					))}
+				</div>
+			</div>
+			<div class="relative">
+				<div class="rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
+					<img src="https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Servicios inmobiliarios" class="w-full h-full object-cover" />
+				</div>
+			</div>
+		</div>
+	</div>
+</section>

@@ -1,0 +1,155 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<Layout title="Iniciar sesión">
+	<main class="min-h-screen flex items-center justify-center bg-gray-900 px-4 py-10">
+		<div class="w-full max-w-md">
+			<div class="bg-gray-800 rounded-xl shadow-2xl px-8 py-10">
+
+				<!-- Logo dinámico desde settings -->
+				<div id="logo-container" class="justify-center mb-8 hidden">
+					<img id="company-logo" src="" alt="Logo" class="h-10 object-contain" />
+				</div>
+
+				<!-- Evitar h1 global que fuerza 3.5rem -->
+				<p class="text-3xl font-bold text-white text-center mb-2">Bienvenido de vuelta</p>
+				<p class="text-sm text-gray-400 text-center mb-8" id="login-subtitle">
+					Inicia sesión en tu cuenta
+				</p>
+
+				<form id="loginForm" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="space-y-5">
+
+					<div>
+						<label for="email" class="block text-sm font-medium text-gray-200 mb-2">
+							Correo electrónico
+						</label>
+						<input
+							type="email"
+							id="email"
+							name="email"
+							required
+							placeholder="nombre@empresa.com"
+							autocomplete="email"
+							class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-4 py-3 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+						/>
+					</div>
+
+					<div>
+						<label for="password" class="block text-sm font-medium text-gray-200 mb-2">
+							Contraseña
+						</label>
+						<div class="relative">
+						<input
+							type="password"
+							id="password"
+							name="password"
+							required
+							placeholder="••••••••"
+							autocomplete="current-password"
+							class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-4 py-3 pr-11 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+						/>
+						<button type="button" onclick="togglePassword('password', this)" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors">
+							<svg class="eye-show w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+							<svg class="eye-hide w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+						</button>
+					</div>
+					</div>
+
+<div
+						id="error-message"
+						class="hidden px-4 py-3 rounded-lg bg-red-900/40 border border-red-700 text-red-400 text-sm"
+					></div>
+
+					<button
+						type="submit"
+						id="submit-btn"
+						class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-medium rounded-lg py-3 px-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+					>
+						Iniciar sesión
+					</button>
+
+				</form>
+			</div>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	window.addEventListener('settings-loaded', ((event: CustomEvent) => {
+		const { company_name, logo_url } = event.detail;
+
+		const subtitle = document.getElementById('login-subtitle');
+		if (subtitle && company_name) {
+			subtitle.textContent = `Panel de administración — ${company_name}`;
+		}
+
+		const logo = document.getElementById('company-logo') as HTMLImageElement;
+		const logoContainer = document.getElementById('logo-container');
+		if (logo && logoContainer && logo_url) {
+			logo.src = logo_url;
+			logoContainer.classList.remove('hidden');
+			logoContainer.classList.add('flex');
+		}
+	}) as EventListener);
+</script>
+
+<script>
+	function togglePassword(inputId: string, btn: HTMLButtonElement) {
+		const input = document.getElementById(inputId) as HTMLInputElement;
+		const isPassword = input.type === 'password';
+		input.type = isPassword ? 'text' : 'password';
+		btn.querySelector('.eye-show')?.classList.toggle('hidden', isPassword);
+		btn.querySelector('.eye-hide')?.classList.toggle('hidden', !isPassword);
+	}
+	(window as any).togglePassword = togglePassword;
+</script>
+
+<script>
+	import { createClient } from '@supabase/supabase-js';
+
+	const form = document.getElementById('loginForm') as HTMLFormElement;
+	const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+	const errorMessage = document.getElementById('error-message') as HTMLElement;
+
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+
+		const originalText = submitBtn.textContent;
+		submitBtn.textContent = 'Iniciando sesión...';
+		submitBtn.disabled = true;
+		errorMessage.classList.add('hidden');
+
+		try {
+			const formData = new FormData(e.target as HTMLFormElement);
+			const email = formData.get('email') as string;
+			const password = formData.get('password') as string;
+
+			const supabaseUrl = form.dataset.supabaseUrl;
+			const supabaseKey = form.dataset.supabaseKey;
+
+			if (!supabaseUrl || !supabaseKey) throw new Error('Configuración no disponible');
+
+			const supabase = createClient(supabaseUrl, supabaseKey);
+			const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+			if (error) throw error;
+
+			if (data.session) {
+				localStorage.setItem('supabase_session', JSON.stringify(data.session));
+				window.location.href = '/dashboard';
+			}
+		} catch (error: any) {
+			console.error('Error:', error);
+			errorMessage.textContent = error.message === 'Invalid login credentials'
+				? 'Credenciales incorrectas. Verifica tu correo y contraseña.'
+				: 'Error al iniciar sesión. Intenta nuevamente.';
+			errorMessage.classList.remove('hidden');
+			submitBtn.textContent = originalText;
+			submitBtn.disabled = false;
+		}
+	});
+</script>

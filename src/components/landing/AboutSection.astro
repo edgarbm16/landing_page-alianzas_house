@@ -1,0 +1,57 @@
+---
+import SectionHeader from './SectionHeader.astro';
+
+interface Props {
+	h2?: string;
+}
+const { h2 } = Astro.props;
+
+const bullets = [
+	'Cartera exclusiva de propiedades residenciales y comerciales',
+	'Agentes certificados con profundo conocimiento del mercado',
+	'Asesoría legal y financiera integral sin costo adicional',
+	'Acompañamiento en todo el proceso de compra, venta o renta',
+];
+---
+
+<section id="nosotros" class="bg-white py-20 lg:py-28">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+			<div class="relative">
+				<div class="rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
+					<img src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Nuestro equipo" class="w-full h-full object-cover" />
+				</div>
+				<div class="absolute -bottom-5 -right-5 bg-blue-600 rounded-2xl p-5 shadow-lg hidden sm:block">
+					<p class="text-white text-2xl font-bold">15+</p>
+					<p class="text-blue-200 text-sm">Años en el mercado</p>
+				</div>
+			</div>
+
+			<div>
+				<SectionHeader
+					badge="Sobre Nosotros"
+					title={h2 || 'Expertos en el mercado inmobiliario mexicano'}
+					subtitle="Somos una empresa líder en bienes raíces con presencia en las principales ciudades de México. Nuestro compromiso es brindarte la mejor asesoría para que tomes la decisión más acertada."
+					align="left"
+					class="mb-8"
+				/>
+				<ul class="space-y-3 mb-8">
+					{bullets.map(item => (
+						<li class="flex items-start gap-3 text-gray-600 text-sm">
+							<svg class="w-5 h-5 text-blue-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+								<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+							</svg>
+							{item}
+						</li>
+					))}
+				</ul>
+				<a href="#contacto" class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors text-sm">
+					Conoce más sobre nosotros
+					<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+						<path d="M5 12h14M12 5l7 7-7 7"/>
+					</svg>
+				</a>
+			</div>
+		</div>
+	</div>
+</section>

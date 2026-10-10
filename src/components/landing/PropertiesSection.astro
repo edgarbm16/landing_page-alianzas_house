@@ -1,0 +1,83 @@
+---
+import SectionHeader from './SectionHeader.astro';
+
+const properties = [
+	{
+		image: 'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+		alt: 'Casa Moderna',
+		badge: 'En Venta',
+		badgeColor: 'bg-blue-600',
+		price: '$4,500,000 MXN',
+		title: 'Casa Moderna en Zona Residencial',
+		location: 'Polanco, Ciudad de México',
+		beds: '4',
+		baths: '3',
+		area: '350',
+	},
+	{
+		image: 'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+		alt: 'Villa de Lujo',
+		badge: 'En Venta',
+		badgeColor: 'bg-blue-600',
+		price: '$9,200,000 MXN',
+		title: 'Villa de Lujo con Piscina',
+		location: 'Cuernavaca, Morelos',
+		beds: '5',
+		baths: '4',
+		area: '500',
+	},
+	{
+		image: 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+		alt: 'Apartamento Ejecutivo',
+		badge: 'Renta',
+		badgeColor: 'bg-emerald-600',
+		price: '$32,000/mes MXN',
+		title: 'Apartamento Ejecutivo Amueblado',
+		location: 'Santa Fe, Ciudad de México',
+		beds: '2',
+		baths: '2',
+		area: '120',
+	},
+];
+---
+
+<section id="propiedades" class="bg-white py-20 lg:py-28">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<SectionHeader badge="Propiedades Destacadas" title="Explora nuestro portafolio exclusivo" class="mb-14" />
+
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+			{properties.map(p => (
+				<div class="group bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-shadow">
+					<div class="relative overflow-hidden aspect-[4/3]">
+						<img src={p.image} alt={p.alt} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+						<span class={`absolute top-3 left-3 px-2.5 py-1 rounded-full ${p.badgeColor} text-white text-xs font-semibold`}>{p.badge}</span>
+					</div>
+					<div class="p-5">
+						<p class="text-xl font-bold text-gray-900 mb-1">{p.price}</p>
+						<h3 class="text-base font-semibold text-gray-800 mb-2">{p.title}</h3>
+						<p class="text-sm text-gray-500 flex items-center gap-1.5 mb-4">
+							<svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+							</svg>
+							{p.location}
+						</p>
+						<div class="flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-gray-100">
+							<span>🛏 {p.beds} Hab</span>
+							<span>🚿 {p.baths} Baños</span>
+							<span>📐 {p.area} m²</span>
+						</div>
+					</div>
+				</div>
+			))}
+		</div>
+
+		<div class="text-center mt-10">
+			<a href="#contacto" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-200 hover:border-blue-300 text-gray-700 hover:text-blue-600 font-semibold transition-colors text-sm">
+				Ver todas las propiedades
+				<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+					<path d="M5 12h14M12 5l7 7-7 7"/>
+				</svg>
+			</a>
+		</div>
+	</div>
+</section>

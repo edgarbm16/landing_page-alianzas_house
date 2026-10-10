@@ -1,0 +1,478 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import FormField from '../../components/dashboard/FormField.astro';
+
+const supabaseUrl = import.meta.env.SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+---
+
+<DashboardLayout title="Usuarios" activeNav="users" pageTitle="Gestión de Usuarios">
+  <div id="page-data" data-supabase-url={supabaseUrl} data-supabase-key={supabaseAnonKey} class="hidden"></div>
+
+  <!-- Actions -->
+  <div class="flex justify-end">
+    <button id="add-user-btn" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+      </svg>
+      Agregar Usuario
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead>
+          <tr class="text-xs font-medium text-gray-400 uppercase bg-gray-700/40 border-b border-gray-700">
+            <th class="px-5 py-3">Email</th>
+            <th class="px-5 py-3">Nombre Completo</th>
+            <th class="px-5 py-3">Rol</th>
+            <th class="px-5 py-3 hidden sm:table-cell">Fecha de Creación</th>
+            <th class="px-5 py-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody" class="divide-y divide-gray-700">
+          <tr><td colspan="5" class="px-5 py-10 text-center text-gray-500">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="user-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+        <p id="modal-title" class="text-white font-semibold text-lg">Agregar Usuario</p>
+        <button id="modal-close" class="text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors">✕</button>
+      </div>
+
+      <form id="user-form" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        <input type="hidden" id="user-id" />
+
+        <FormField label="Email *">
+          <input type="email" id="user-email-input" required
+            class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+        </FormField>
+
+        <FormField label="Nombre Completo">
+          <input type="text" id="user-fullname"
+            class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </FormField>
+
+        <FormField label="Rol *">
+          <select id="user-role" required
+            class="rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </select>
+        </FormField>
+
+        <div id="password-group">
+          <FormField label="Contraseña *" hint="Mínimo 6 caracteres">
+            <div class="relative">
+              <input type="password" id="user-password" minlength="6"
+                class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" onclick="togglePassword('user-password', this)" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-200 transition-colors">
+                <svg class="eye-show w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-hide w-4.5 h-4.5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </FormField>
+        </div>
+
+        <div id="change-password-group" style="display:none">
+          <FormField label="Nueva Contraseña" hint="Déjalo vacío para no cambiar la contraseña">
+            <div class="relative">
+              <input type="password" id="user-new-password" minlength="6"
+                class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" onclick="togglePassword('user-new-password', this)" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-200 transition-colors">
+                <svg class="eye-show w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-hide w-4.5 h-4.5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </FormField>
+        </div>
+
+        <div id="own-password-group" style="display:none" class="border-t border-gray-700 pt-4 space-y-3">
+          <p class="text-sm text-gray-300 font-medium">Cambiar mi contraseña</p>
+          <FormField label="Nueva contraseña" hint="Déjalo vacío para no cambiar la contraseña">
+            <div class="relative">
+              <input type="password" id="own-new-password" minlength="6"
+                class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" onclick="togglePassword('own-new-password', this)" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-200 transition-colors">
+                <svg class="eye-show w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-hide w-4.5 h-4.5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </FormField>
+          <FormField label="Confirmar contraseña">
+            <div class="relative">
+              <input type="password" id="own-confirm-password" minlength="6"
+                class="w-full rounded-lg bg-gray-700 border border-gray-600 text-white text-sm px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <button type="button" onclick="togglePassword('own-confirm-password', this)" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-200 transition-colors">
+                <svg class="eye-show w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-hide w-4.5 h-4.5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </FormField>
+        </div>
+
+        <div id="permissions-group" class="flex flex-col gap-2">
+          <p class="text-sm text-gray-300 font-medium">Permisos de Módulos</p>
+          <p class="text-xs text-gray-500">Selecciona los módulos a los que el usuario tendrá acceso</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-700/50 border border-gray-700 hover:border-gray-500 cursor-pointer transition-colors">
+              <input type="checkbox" name="permission" value="prospects" checked class="w-4 h-4 rounded accent-blue-500" />
+              <div>
+                <p class="text-sm text-gray-200 font-medium">Prospectos</p>
+                <p class="text-xs text-gray-500">Ver y gestionar prospectos</p>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-700/50 border border-gray-700 hover:border-gray-500 cursor-pointer transition-colors">
+              <input type="checkbox" name="permission" value="landings" class="w-4 h-4 rounded accent-blue-500" />
+              <div>
+                <p class="text-sm text-gray-200 font-medium">Landings</p>
+                <p class="text-xs text-gray-500">Gestionar landing pages</p>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-700/50 border border-gray-700 hover:border-gray-500 cursor-pointer transition-colors">
+              <input type="checkbox" name="permission" value="emails" class="w-4 h-4 rounded accent-blue-500" />
+              <div>
+                <p class="text-sm text-gray-200 font-medium">Correos</p>
+                <p class="text-xs text-gray-500">Configurar destinatarios</p>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-gray-700/50 border border-gray-700 hover:border-gray-500 cursor-pointer transition-colors">
+              <input type="checkbox" name="permission" value="settings" class="w-4 h-4 rounded accent-blue-500" />
+              <div>
+                <p class="text-sm text-gray-200 font-medium">Configuración</p>
+                <p class="text-xs text-gray-500">Ajustes del sistema</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </form>
+
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-700">
+        <button type="button" id="cancel-btn" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium transition-colors">Cancelar</button>
+        <button type="submit" form="user-form" id="submit-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+          <span id="submit-text">Crear Usuario</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  function togglePassword(inputId: string, btn: HTMLButtonElement) {
+    const input = document.getElementById(inputId) as HTMLInputElement;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btn.querySelector('.eye-show')?.classList.toggle('hidden', isPassword);
+    btn.querySelector('.eye-hide')?.classList.toggle('hidden', !isPassword);
+  }
+  (window as any).togglePassword = togglePassword;
+</script>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  function esc(s: any): string {
+    return (s ?? '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  const pageData    = document.getElementById('page-data') as HTMLElement;
+  const supabaseUrl = pageData?.dataset.supabaseUrl;
+  const supabaseKey = pageData?.dataset.supabaseKey;
+
+  const addUserBtn   = document.getElementById('add-user-btn') as HTMLButtonElement;
+  const usersTbody   = document.getElementById('users-tbody') as HTMLElement;
+  const modal        = document.getElementById('user-modal') as HTMLElement;
+  const modalClose   = document.getElementById('modal-close') as HTMLButtonElement;
+  const cancelBtn    = document.getElementById('cancel-btn') as HTMLButtonElement;
+  const userForm     = document.getElementById('user-form') as HTMLFormElement;
+  const modalTitle   = document.getElementById('modal-title') as HTMLElement;
+  const submitBtn    = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitText   = document.getElementById('submit-text') as HTMLElement;
+
+  const ROLE_LEVEL: Record<string, number> = { Administrador: 4, Gestor: 3, Editor: 2, Analista: 1 };
+
+  let currentUser: any = null;
+  let currentUserRole = '';
+  let editingUserId: string | null = null;
+
+  if (!supabaseUrl || !supabaseKey) {
+    window.location.href = '/login';
+  } else {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.addEventListener('dashboard-ready', async (e: Event) => {
+      const { session, profile } = (e as CustomEvent).detail;
+
+      if (!profile || !['Administrador', 'Gestor'].includes(profile.role)) {
+        (window as any).dashAlert('Sin permisos para acceder a esta página', 'error');
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      currentUser = session.user;
+      currentUserRole = profile.role;
+      loadRoleOptions();
+      await loadUsers();
+    });
+
+    function loadRoleOptions() {
+      const sel = document.getElementById('user-role') as HTMLSelectElement;
+      sel.innerHTML = currentUserRole === 'Administrador'
+        ? `<option value="Editor">Editor</option><option value="Analista">Analista</option><option value="Gestor">Gestor</option><option value="Administrador">Administrador</option>`
+        : `<option value="Editor">Editor</option><option value="Analista">Analista</option>`;
+    }
+
+    async function loadUsers() {
+      const { data: users, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        usersTbody.innerHTML = '<tr><td colspan="5" class="px-5 py-10 text-center text-red-400">Error al cargar usuarios</td></tr>';
+        return;
+      }
+      if (!users?.length) {
+        usersTbody.innerHTML = '<tr><td colspan="5" class="px-5 py-10 text-center text-gray-500">No hay usuarios registrados</td></tr>';
+        return;
+      }
+
+      const roleColors: Record<string, string> = {
+        administrador: 'bg-red-900/40 text-red-400',
+        gestor:        'bg-yellow-900/40 text-yellow-400',
+        analista:      'bg-blue-900/40 text-blue-400',
+        editor:        'bg-green-900/40 text-green-400',
+      };
+
+      usersTbody.innerHTML = users.map(u => `
+        <tr class="hover:bg-gray-700/30 transition-colors">
+          <td class="px-5 py-3 text-gray-300 text-sm">${esc(u.email)}</td>
+          <td class="px-5 py-3 text-gray-300 text-sm">${esc(u.full_name || '—')}</td>
+          <td class="px-5 py-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${roleColors[u.role.toLowerCase()] ?? 'bg-gray-700 text-gray-300'}">
+              ${esc(u.role)}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-gray-400 text-xs hidden sm:table-cell">${new Date(u.created_at).toLocaleDateString('es-MX')}</td>
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-2">
+              <button class="edit-btn text-xs px-2.5 py-1 rounded bg-blue-900/30 text-blue-400 hover:bg-blue-900/60 transition-colors" data-user-id="${esc(u.id)}">Editar</button>
+              ${u.id !== currentUser?.id ? `<button class="delete-btn text-xs px-2.5 py-1 rounded bg-red-900/30 text-red-400 hover:bg-red-900/60 transition-colors" data-user-id="${esc(u.id)}">Eliminar</button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', async e => {
+        const userId = (e.target as HTMLElement).dataset.userId;
+        if (userId) await openEditModal(userId);
+      }));
+      document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async e => {
+        const userId = (e.target as HTMLElement).dataset.userId;
+        if (userId) await deleteUser(userId);
+      }));
+    }
+
+    function openCreateModal() {
+      editingUserId = null;
+      modalTitle.textContent = 'Agregar Usuario';
+      submitText.textContent = 'Crear Usuario';
+      userForm.reset();
+      (document.getElementById('user-id') as HTMLInputElement).value = '';
+      (document.getElementById('user-email-input') as HTMLInputElement).disabled = false;
+      (document.getElementById('password-group') as HTMLElement).style.display = '';
+      (document.getElementById('user-password') as HTMLInputElement).required = true;
+      const changePasswordGroup = document.getElementById('change-password-group') as HTMLElement;
+      changePasswordGroup.style.display = 'none';
+      (document.getElementById('user-new-password') as HTMLInputElement).value = '';
+      (document.getElementById('own-password-group') as HTMLElement).style.display = 'none';
+      (document.getElementById('own-new-password') as HTMLInputElement).value = '';
+      (document.getElementById('own-confirm-password') as HTMLInputElement).value = '';
+      const prospectsChk = document.querySelector('input[value="prospects"]') as HTMLInputElement;
+      if (prospectsChk) prospectsChk.checked = true;
+      openModal();
+    }
+
+    async function openEditModal(userId: string) {
+      editingUserId = userId;
+      modalTitle.textContent = 'Editar Usuario';
+      submitText.textContent = 'Actualizar Usuario';
+
+      const { data: user, error } = await supabase.from('user_profiles').select('*').eq('id', userId).maybeSingle();
+      if (error || !user) { (window as any).dashAlert('Error al cargar datos del usuario', 'error'); return; }
+
+      (document.getElementById('user-id') as HTMLInputElement).value = user.id;
+      (document.getElementById('user-email-input') as HTMLInputElement).value = user.email;
+      (document.getElementById('user-email-input') as HTMLInputElement).disabled = true;
+      (document.getElementById('user-fullname') as HTMLInputElement).value = user.full_name || '';
+      (document.getElementById('user-role') as HTMLSelectElement).value = user.role;
+      (document.getElementById('password-group') as HTMLElement).style.display = 'none';
+      (document.getElementById('user-password') as HTMLInputElement).required = false;
+
+      const changePasswordGroup = document.getElementById('change-password-group') as HTMLElement;
+      const ownPasswordGroup = document.getElementById('own-password-group') as HTMLElement;
+      (document.getElementById('user-new-password') as HTMLInputElement).value = '';
+      (document.getElementById('own-new-password') as HTMLInputElement).value = '';
+      (document.getElementById('own-confirm-password') as HTMLInputElement).value = '';
+
+      const isSelfAdmin = user.id === currentUser?.id && currentUserRole === 'Administrador';
+      const canChangePassword =
+        ROLE_LEVEL[currentUserRole] > (ROLE_LEVEL[user.role] ?? 0) &&
+        !isSelfAdmin;
+
+      ownPasswordGroup.style.display = isSelfAdmin ? 'block' : 'none';
+      changePasswordGroup.style.display = canChangePassword ? 'block' : 'none';
+
+      await loadUserPermissions(userId);
+      openModal();
+    }
+
+    async function loadUserPermissions(userId: string) {
+      const { data: perms } = await supabase
+        .from('user_module_permissions')
+        .select('module_name')
+        .eq('user_id', userId);
+
+      document.querySelectorAll<HTMLInputElement>('input[name="permission"]').forEach(cb => { cb.checked = false; });
+      perms?.forEach(p => {
+        const cb = document.querySelector<HTMLInputElement>(`input[value="${p.module_name}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
+
+    async function saveUserPermissions(userId: string, permissions: string[]) {
+      const { error: delErr } = await supabase.from('user_module_permissions').delete().eq('user_id', userId);
+      if (delErr) throw delErr;
+      if (permissions.length) {
+        const { error: insErr } = await supabase.from('user_module_permissions').insert(
+          permissions.map(m => ({ user_id: userId, module_name: m }))
+        );
+        if (insErr) throw insErr;
+      }
+    }
+
+    async function deleteUser(userId: string) {
+      if (!await (window as any).dashConfirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': supabaseKey as string,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        (window as any).dashAlert(`Error al eliminar: ${err.error}`, 'error');
+        return;
+      }
+      await loadUsers();
+      (window as any).dashAlert('Usuario eliminado exitosamente', 'success');
+    }
+
+    function openModal() {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      userForm.reset();
+      editingUserId = null;
+    }
+
+    userForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitText.textContent = editingUserId ? 'Actualizando...' : 'Creando...';
+
+      try {
+        const email    = (document.getElementById('user-email-input') as HTMLInputElement).value;
+        const fullName = (document.getElementById('user-fullname') as HTMLInputElement).value;
+        const role     = (document.getElementById('user-role') as HTMLSelectElement).value;
+        const password = (document.getElementById('user-password') as HTMLInputElement).value;
+        const selected = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="permission"]:checked')).map(cb => cb.value);
+
+        if (editingUserId) {
+          const { error } = await supabase.from('user_profiles').update({ full_name: fullName, role }).eq('id', editingUserId);
+          if (error) throw error;
+          await saveUserPermissions(editingUserId, selected);
+
+          const isSelf = editingUserId === currentUser?.id;
+
+          if (isSelf) {
+            const ownNewPassword = (document.getElementById('own-new-password') as HTMLInputElement).value;
+            const ownConfirmPassword = (document.getElementById('own-confirm-password') as HTMLInputElement).value;
+            if (ownNewPassword) {
+              if (ownNewPassword.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
+              if (ownNewPassword !== ownConfirmPassword) throw new Error('Las contraseñas no coinciden.');
+              const { error: pwdError } = await supabase.auth.updateUser({ password: ownNewPassword });
+              if (pwdError) throw pwdError;
+            }
+          } else {
+            const newPassword = (document.getElementById('user-new-password') as HTMLInputElement).value;
+            if (newPassword) {
+              const { data: { session } } = await supabase.auth.getSession();
+              const res = await fetch(`${supabaseUrl}/functions/v1/update-user-password`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${session?.access_token}`,
+                  'apikey': supabaseKey as string,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ targetUserId: editingUserId, newPassword }),
+              });
+              if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Error al cambiar contraseña'); }
+            }
+          }
+
+          closeModal();
+          await loadUsers();
+          (window as any).dashAlert('Usuario actualizado exitosamente', 'success');
+        } else {
+          const { data: { session } } = await supabase.auth.getSession();
+          const res = await fetch(`${supabaseUrl}/functions/v1/create-user`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'apikey': supabaseKey as string,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password, fullName, role, createdBy: currentUser.id }),
+          });
+          if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Error al crear'); }
+          const result = await res.json();
+          await saveUserPermissions(result.user.id, selected);
+          closeModal();
+          await loadUsers();
+          (window as any).dashAlert('Usuario creado exitosamente', 'success');
+        }
+      } catch (err: any) {
+        (window as any).dashAlert(`Error: ${err.message}`, 'error');
+        submitBtn.disabled = false;
+        submitText.textContent = editingUserId ? 'Actualizar Usuario' : 'Crear Usuario';
+        return;
+      }
+      submitBtn.disabled = false;
+      submitText.textContent = editingUserId ? 'Actualizar Usuario' : 'Crear Usuario';
+    });
+
+    addUserBtn?.addEventListener('click', openCreateModal);
+    modalClose?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  }
+</script>
